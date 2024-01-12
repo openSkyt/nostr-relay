@@ -5,26 +5,23 @@
       <title>Very dumb NOSTR client</title>
   </head>
   <body>
-    <script>
+  <button id="sendMessageButton" onclick="sendMessage()">Send Message</button>
+  <script>
 
       let socket = new WebSocket('ws://localhost:8080/ws');
+      const eventData = {
+          "id": "fedcba551",
+          "pubkey": "abcdef012345",
+          "created_at": 1632871,
+          "kind": 1,
+          "tags": ["tag1", "tag2"],
+          "content": "arbitrary content",
+          "sig": "abcdef0123456789abcde"
+      };
+      const sampleMessage = JSON.stringify(["EVENT", eventData]);
 
       socket.addEventListener('open', function (event) {
         console.log('WebSocket connection opened:', event);
-
-        const eventData = {
-          "id": "12345678901234567890123456789012",
-          "pubkey": "abcdef0123456789abcdef0123456789",
-          "created_at": 1632871685,
-          "kind": 1,
-          "tags": ["tag1", "tag2"],
-          "content": "This is some arbitrary content",
-          "sig": "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789"
-        };
-        const sampleMessage = JSON.stringify(["EVENT", eventData]);
-
-        console.log('Sending message:', sampleMessage);
-        socket.send(sampleMessage);
       });
 
       socket.addEventListener('message', function (message) {
@@ -34,6 +31,11 @@
       socket.addEventListener('close', function (message) {
         console.log('WebSocket connection closed:', message);
       });
+
+      function sendMessage() {
+          console.log('Sending message:', sampleMessage);
+          socket.send(sampleMessage);
+      }
 
     </script>
   </body>
