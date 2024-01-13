@@ -12,11 +12,11 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final EventRepo repo;
+    private final NostrProtocol nostr;
 
     @Bean
     public WebSocketHandler webSocketHandler() {
-        return new WebSocketHandler(repo);
+        return new WebSocketHandler(nostr);
     }
 
     @Override
