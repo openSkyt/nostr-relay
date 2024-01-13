@@ -43,6 +43,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                                   TextMessage message) {
 
         String payload = message.getPayload();
+        nostr.handleMessage(payload);
         SESSIONS.forEach(s -> {
             try {
                 s.sendMessage(new TextMessage(payload));
@@ -50,8 +51,5 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 throw new RuntimeException(e);
             }
         });
-
-        nostr.saveEvent(nostr.deserializeMessage(payload).eventData());
-        System.out.println("deserialized object: " + nostr.deserializeMessage(payload).toString());
     }
 }
