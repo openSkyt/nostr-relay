@@ -1,4 +1,4 @@
-package org.openskyt.nostrrelay;
+package org.openskyt.nostrrelay.dto;
 
 import org.springframework.web.socket.WebSocketSession;
 

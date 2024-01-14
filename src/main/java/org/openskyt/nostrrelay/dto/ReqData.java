@@ -1,4 +1,4 @@
-package org.openskyt.nostrrelay;
+package org.openskyt.nostrrelay.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -26,21 +26,6 @@ public class ReqData {
     private WebSocketSession session;
     private String subscription_id;
 
-    @Override
-    public String toString() {
-        return "ReqData{" +
-                "ids=" + ids +
-                ", authors=" + authors +
-                ", kinds=" + kinds +
-                ", e=" + e +
-                ", p=" + p +
-                ", since=" + since +
-                ", until=" + until +
-                ", limit=" + limit +
-                ", session=" + session +
-                ", subscription_id='" + subscription_id + '\'' +
-                '}';
-    }
 }
 
 

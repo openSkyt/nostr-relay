@@ -1,4 +1,4 @@
-package org.openskyt.nostrrelay;
+package org.openskyt.nostrrelay.dto;
 
 public record EventMessageData(
         String type,
