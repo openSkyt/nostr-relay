@@ -1,13 +1,23 @@
 package org.openskyt.nostrrelay;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.web.socket.WebSocketSession;
+
 import java.util.List;
 
-public record EventData(
-    String id,
-    String pubkey,
-    long created_at,
-    int kind,
-    List<String> tags,
-    String content,
-    String sig) {
+@Getter
+@Setter
+@NoArgsConstructor
+public class EventData {
+
+    private String id;
+    private String pubkey;
+    private long created_at;
+    private int kind;
+    private List<String> tags;
+    private String content;
+    private String sig;
+    private WebSocketSession session;
 }

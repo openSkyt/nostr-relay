@@ -5,10 +5,12 @@
       <title>Very dumb NOSTR client</title>
   </head>
   <body>
-  <button id="sendMessageButton" onclick="sendMessage()">Send Message</button>
+  <button id="sendMessageButton" onclick="sendEvent()">Send Event</button>
+  <button id="sendMessageButton2" onclick="sendReq()">Send Req</button>
+  <button id="sendMessageButton3" onclick="sendClose()">Send Close</button>
   <script>
 
-      let socket = new WebSocket('ws://localhost:8080/ws');
+      let socket = new WebSocket('ws://localhost:8080/nostr');
       const eventData = {
           "id": "fedcba551",
           "pubkey": "abcdef012345",
@@ -18,7 +20,20 @@
           "content": "arbitrary content",
           "sig": "abcdef0123456789abcde"
       };
-      const sampleMessage = JSON.stringify(["EVENT", eventData]);
+      const reqData = {
+          "ids": ["fedcba551", "aaaaaab"],
+          "authors": ["abcdef012345", "pubkey2", "pubkey3"],
+          "kinds": [0, 1],
+          "#e": ["sdfs", "gzhh", "df"],
+          "#p": ["pubkey4", "pubkey5", "pubkey6"],
+          "since": 1642156800,
+          "until": 1642243200,
+          "limit": 10
+      }
+
+      const eventMessage = JSON.stringify(["EVENT", eventData]);
+      const reqMessage = JSON.stringify(["REQ", "sample_sub_id", reqData]);
+      const closeMessage = JSON.stringify(["CLOSE", "sample_sub_id"]);
 
       socket.addEventListener('open', function (event) {
         console.log('WebSocket connection opened:', event);
@@ -32,9 +47,19 @@
         console.log('WebSocket connection closed:', message);
       });
 
-      function sendMessage() {
-          console.log('Sending message:', sampleMessage);
-          socket.send(sampleMessage);
+      function sendEvent() {
+          console.log('Sending message:', eventMessage);
+          socket.send(eventMessage);
+      }
+
+      function sendReq() {
+          console.log('Sending message:', reqMessage);
+          socket.send(reqMessage);
+      }
+
+      function sendClose() {
+          console.log('Sending message:', closeMessage);
+          socket.send(closeMessage);
       }
 
     </script>

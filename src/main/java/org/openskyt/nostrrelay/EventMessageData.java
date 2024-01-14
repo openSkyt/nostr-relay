@@ -1,6 +1,6 @@
 package org.openskyt.nostrrelay;
 
-public record MessageData(
+public record EventMessageData(
         String type,
         EventData eventData
 ) {
