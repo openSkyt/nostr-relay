@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
 import java.util.Set;
@@ -24,9 +23,8 @@ public class ReqData {
     private long since;
     private long until;
     private long limit;
-    private WebSocketSession session;
-    private String subscription_id;
 
+    private Subscription subscription;
 }
 
 

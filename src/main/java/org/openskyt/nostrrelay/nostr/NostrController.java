@@ -19,7 +19,7 @@ import java.util.*;
 public class NostrController extends TextWebSocketHandler {
 
     private final NostrPersistence persistence;
-    private final NostrDeserializer deserializer = new NostrDeserializer();
+    private final NostrDeserializer deser = new NostrDeserializer();
     private final Map<Subscription, ReqData> subs = new HashMap<>();
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
 
@@ -42,134 +42,209 @@ public class NostrController extends TextWebSocketHandler {
         handleMessage(session, payload);
     }
 
+    /**
+     * Handles incoming generic message by checking NOSTR compatible types and invoking proper handling logic if any.
+     * @param session
+     * current ws-session
+     * @param messageJSON
+     * incoming message payload
+     */
     private void handleMessage(WebSocketSession session, String messageJSON) {
-        Object[] message;
         try {
-            message = deserializer.getMapper().readValue(messageJSON, Object[].class);
+            Object[] message = deser.getMapper().readValue(messageJSON, Object[].class);
+            switch (message[0].toString()) {
+                case "REQ"      : Set<ReqData> reqDataSet = deser.deserializeReqMessage(session, messageJSON);
+                                  handleReq(reqDataSet); // handling method
+                                  break;
+                case "CLOSE"    : CloseData closeData = deser.deserializeCloseMessage(session, messageJSON);
+                                  handleClose(closeData); // handling method
+                                  break;
+                case "EVENT"    : EventData eventData = deser.deserializeEventMessage(session, messageJSON);
+                                  handleEvent(eventData); // handling method
+                                  handleSubFeed(eventData); // after receiving event -> broadcast
+                                  break;
+                default         : System.err.println("Invalid NOSTR message received");
+            }
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
             throw new RuntimeException(e);
         }
-        switch (message[0].toString()) {
-            case "REQ"      : handleReq(deserializer.deserializeReqMessage(messageJSON, session));
-                              break;
-            case "CLOSE"    : handleClose(deserializer.deserializeCloseMessage(messageJSON, session));
-                              break;
-            case "EVENT"    : EventMessageData eventMessageData = deserializer.deserializeEventMessage(messageJSON, session);
-                              handleEvent(eventMessageData);
-                              handleSubFeed(eventMessageData);
-                              break;
-            default         : System.err.println("Invalid NOSTR message received");
+    }
+
+    /**
+     * Handles NOSTR REQ-message by adding a subscription and sends EVENT feed for a new valid subscription back.
+     * @param reqDataSet
+     * parsed REQ-Message data SET
+     */
+    private void handleReq(Set<ReqData> reqDataSet) {
+        reqDataSet.forEach(r -> {
+            if (subs.containsKey(r.getSubscription())) {
+                subs.remove(r.getSubscription());
+                System.out.println("Sub rewrite");
+            }
+            subs.put(r.getSubscription(), r);
+            System.out.println("new subscription added!");
+
+        });
+        handleNewSubFeed(reqDataSet);
+    }
+
+    /**
+     * Handles NOSTR CLOSE-message by closing existing subscription
+     * @param closeData
+     * parsed CLOSE-message data (present actual subscription)
+     */
+    private void handleClose(CloseData closeData) {
+        if (subs.containsKey(closeData.subscription())) {
+            subs.remove(closeData.subscription());
+            System.out.println("subscription removed!");
         }
     }
 
-    private void handleEvent(EventMessageData eventMessageData) {
-        switch (eventMessageData.eventData().getKind()) {
-            case 0      : handleEvent_0(eventMessageData.eventData()); break;
-            case 1      : handleEvent_1(eventMessageData.eventData()); break;
+    /**
+     * Handles NOSTR EVENT-message by distributing EVENT-data to a proper logic-handling method by EVENT-kind
+     * @param eventData
+     * parsed EVENT-message data
+     */
+    private void handleEvent(EventData eventData) {
+        switch (eventData.getKind()) {
+            case 0      : handleEvent_0(eventData); break;
+            case 1      : handleEvent_1(eventData); break;
             default     : System.err.println("Unsupported kind received");
         }
     }
 
-    private void handleReq(ReqMessageData reqMessageData) {
-        Subscription subscription = new Subscription(reqMessageData.subscription_id(), reqMessageData.reqData().get(0).getSession());
-        if (subs.containsKey(subscription)) {
-            System.out.println("rewriting current sub..");
-            subs.remove(subscription);
-        }
-        for (ReqData req : reqMessageData.reqData()) {
-            subs.put(subscription, req);
-        }
-        System.out.println("new subscription added!");
-        System.out.println("current subs size: " + subs.size());
-        handleNewSubFeed(reqMessageData.reqData());
-    }
-
-    private void handleNewSubFeed(List<ReqData> reqDataList) {
-        WebSocketSession session = reqDataList.get(0).getSession();
-        String subscription_id = reqDataList.get(0).getSubscription_id();
+    /**
+     * Feeds newly created subscription with REQuested existing EVENT-data
+     * @param reqDataSet
+     * incoming REQ-data SET
+     */
+    private void handleNewSubFeed(Set<ReqData> reqDataSet) {
         Set<EventData> eventDataSet = new HashSet<>();
+        // filter db-events
         for (EventData eventData : persistence.retrieveAllEvents()) {
-            reqDataList.forEach(r -> eventDataSet.addAll(filterSubFeed(eventData, r)));
+            reqDataSet.forEach(r -> eventDataSet.addAll(filterSubFeed(eventData, r)));
         }
+        // send feed and eose for each subscription
         sendSubFeed(eventDataSet);
-        try {
-            session.sendMessage(eoseMessage(subscription_id));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        reqDataSet.forEach(r -> {
+            try {
+                r.getSubscription().session().sendMessage(eoseMessage(r));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
     }
 
-    private void handleSubFeed(EventMessageData eventMessageData) {
+    /**
+     * Feeds current subscriptions with REQuested incoming EVENT-data
+     * @param eventData
+     * examined EVENT-data to filter
+     */
+    private void handleSubFeed(EventData eventData) {
         Set<EventData> eventDataSet = new HashSet<>();
         for (Map.Entry<Subscription, ReqData> entry : subs.entrySet()) {
             ReqData reqData = entry.getValue();
-            eventDataSet.addAll(filterSubFeed(eventMessageData.eventData(), reqData));
+            eventDataSet.addAll(filterSubFeed(eventData, reqData));
         }
         sendSubFeed(eventDataSet);
     }
 
+    /**
+     * Compares EVENT-data to REQ-data specifics
+     * @param eventData
+     * EVENT-data to examine
+     * @param reqData
+     * REQ-data to filter by
+     * @return
+     * compatible EVENT-data
+     */
     private Set<EventData> filterSubFeed(EventData eventData, ReqData reqData) {
-        Set<EventData> e = new HashSet<>();
+        Set<EventData> validEventData = new HashSet<>();
         if (!reqData.getAuthors().isEmpty()) {
             if (reqData.getAuthors().contains(eventData.getPubkey())) {
-                e.add(eventData);
-                eventData.setSession(reqData.getSession());
-                eventData.setSubscription_id(reqData.getSubscription_id());
+                eventData.setSubscription(reqData.getSubscription());
+                validEventData.add(eventData);
             }
         }
-        return e;
+        return validEventData;
     }
 
+    /**
+     * Sends EVENT-data SET to client
+     * @param eventDataSet
+     * EventData to send to client
+     */
     private void sendSubFeed(Set<EventData> eventDataSet) {
-        eventDataSet.forEach(e -> {
+        eventDataSet.forEach(eventData -> {
             try {
-                e.getSession().sendMessage(eventMessage(e.getSubscription_id(), e));
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                eventData.getSubscription().session().sendMessage(eventMessage(eventData));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
     }
 
-
-    private void handleClose(CloseMessageData closeMessageData) {
-        Subscription subscription = new Subscription(closeMessageData.subscription_id(), closeMessageData.session());
-        if (!subs.containsKey(subscription)) {
-            System.out.println("No sub like that found..");
-            System.out.println("current subs size: " + subs.size());
-            return;
-        }
-        subs.remove(subscription);
-        System.out.println("subscription removed!");
-        System.out.println("current subs size: " + subs.size());
-    }
-
+    /**
+     * Handles EVENT-messages kind 0
+     * @param eventData
+     * incoming EVENT-data
+     */
     private void handleEvent_0(EventData eventData) {
         System.out.println("Event kind 0 received!" + eventData);
     }
 
+    /**
+     * Handles EVENT-messages kind 1 by saving into the DB. Responds with OK-message.
+     * @param eventData
+     * incoming EVENT-data
+     */
     private void handleEvent_1(EventData eventData) {
         try {
             persistence.saveEvent(eventData);
-            eventData.getSession().sendMessage(okMessage(eventData.getId(), true));
+            eventData.getSubscription().session().sendMessage(okMessage(eventData, true));
         } catch (Exception e) {
-            System.out.println("Session closed");
+            System.err.println("Session closed");
         }
     }
 
-    private TextMessage okMessage(String payload, boolean wasEventSaved) {
-        return new TextMessage("[\"OK\",\"" + payload + "\"," + wasEventSaved + ",\"\"]");
+    /**
+     * Parses NOSTR OK-message to be sent to client
+     * @param eventData
+     * Mentioned EVENT-data
+     * @param wasEventSaved
+     * Indicates whether the EVENT was saved - set as needed
+     * @return
+     * TextMessage to be sent by WebSocketSession
+     */
+    private TextMessage okMessage(EventData eventData, boolean wasEventSaved) {
+        return new TextMessage("[\"OK\",\"" + eventData.getId() + "\"," + wasEventSaved + ",\"\"]");
     }
 
-    private TextMessage eventMessage(String subscription_id, EventData eventData) {
+    /**
+     * Parses NOSTR EVENT-message to be sent to client
+     * @param eventData
+     * Actual EventData to be sent back
+     * @return
+     * TextMessage to be sent by WebSocketSession
+     */
+    private TextMessage eventMessage(EventData eventData) {
         try {
-            return new TextMessage("[\"EVENT\",\"" + subscription_id + "\"," + deserializer.getMapper().writeValueAsString(eventData) + "]");
+            return new TextMessage("[\"EVENT\",\"" + eventData.getSubscription().subscription_id() + "\"," + deser.getMapper().writeValueAsString(eventData) + "]");
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private TextMessage eoseMessage(String subscription_id) {
-        return new TextMessage("[\"EOSE\",\"" + subscription_id + "\"]");
+    /**
+     * Parses NOSTR EOSE-message to be sent to client
+     * @param reqData
+     * REQ-data related to subscription
+     * @return
+     * TextMessage to be sent by WebSocketSession
+     */
+    private TextMessage eoseMessage(ReqData reqData) {
+        return new TextMessage("[\"EOSE\",\"" + reqData.getSubscription().subscription_id() + "\"]");
     }
 }

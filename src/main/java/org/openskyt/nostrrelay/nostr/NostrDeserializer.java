@@ -7,8 +7,8 @@ import org.openskyt.nostrrelay.dto.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Component
@@ -16,13 +16,20 @@ public class NostrDeserializer {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    public EventMessageData deserializeEventMessage(String messageJSON, WebSocketSession session) {
+    /**
+     * Deserializes incoming EVENT-message into EVENT-data object, adds session info. (uses sub method)
+     * @param session
+     * current ws session
+     * @param messageJSON
+     * incoming EVENT-message
+     * @return
+     * deserialized EVENT-data object
+     */
+    public EventData deserializeEventMessage(WebSocketSession session, String messageJSON) {
         try {
             Object[] messageData = mapper.readValue(messageJSON, Object[].class);
             if (messageData.length == 2) {
-                return new EventMessageData(
-                        messageData[0].toString(),
-                        deserializeEvent(mapper.writeValueAsString(messageData[1]), session));
+                return deserializeEvent(session, mapper.writeValueAsString(messageData[1]));
             }
         } catch (Exception e) {
             throw new RuntimeException();
@@ -30,19 +37,29 @@ public class NostrDeserializer {
         return null;
     }
 
-    public ReqMessageData deserializeReqMessage(String messageJSON, WebSocketSession session) {
+    /**
+     * Deserializes incoming REQ-message to SET of REQ-data objects, adds subscription info. (uses sub method)
+     * @param session
+     * current ws session
+     * @param messageJSON
+     * incoming REQ message
+     * @return
+     * deserialized REQ-data SET
+     */
+    public Set<ReqData> deserializeReqMessage(WebSocketSession session, String messageJSON) {
         try {
             Object[] messageData = mapper.readValue(messageJSON, Object[].class);
             if (messageData.length > 2) {
-                List<ReqData> reqDataList = new ArrayList<>();
+                Set<ReqData> reqDataSet = new HashSet<>();
                 for (int i = 2; i < messageData.length; i++) {
-                    reqDataList.add(deserializeReq(mapper.writeValueAsString(messageData[i]), session, messageData[1].toString()));
+                    reqDataSet.add(deserializeReq(
+                            mapper.writeValueAsString(
+                                    messageData[i]),
+                                    session,
+                                    messageData[1].toString())
+                    );
                 }
-                return new ReqMessageData(
-                        messageData[0].toString(),
-                        messageData[1].toString(),
-                        reqDataList
-                );
+                return reqDataSet;
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -50,34 +67,68 @@ public class NostrDeserializer {
         return null;
     }
 
-    public CloseMessageData deserializeCloseMessage(String messageJSON, WebSocketSession session) {
+    /**
+     * Deserializes incoming CLOSE-message to CLOSE-data object (
+     * @param session
+     * current ws session
+     * @param messageJSON
+     * incoming CLOSE-message
+     * @return
+     * deserialized CLOSE-data
+     */
+    public CloseData deserializeCloseMessage(WebSocketSession session, String messageJSON) {
         try {
             Object[] array = mapper.readValue(messageJSON, Object[].class);
-            return  new CloseMessageData(
-                    array[0].toString(),
-                    array[1].toString(),
-                    session
+            return  new CloseData(
+                        new Subscription(
+                            array[1].toString(),
+                            session
+                        )
             );
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public EventData deserializeEvent(String eventJSON, WebSocketSession session) {
+    /**
+     * Sub method
+     * @param session
+     * current ws session
+     * @param eventJSON
+     * extracted EVENT json
+     * @return
+     * EVENT-data
+     */
+    public EventData deserializeEvent(WebSocketSession session, String eventJSON) {
         try {
             EventData eventData = mapper.readValue(eventJSON, EventData.class);
-            eventData.setSession(session);
+            eventData.setSubscription(new Subscription(null, session));
             return eventData;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
+    /**
+     * Sub method
+     * @param reqJSON
+     * extracted REQ json
+     * @param session
+     * current ws session
+     * @param subscriptionId
+     * incoming REQ-message subscription id
+     * @return
+     * REQ-data
+     */
     private ReqData deserializeReq(String reqJSON, WebSocketSession session, String subscriptionId) {
         try {
             ReqData reqData = mapper.readValue(reqJSON, ReqData.class);
-            reqData.setSession(session);
-            reqData.setSubscription_id(subscriptionId);
+            reqData.setSubscription(
+                    new Subscription(
+                            subscriptionId,
+                            session
+                    )
+            );
             return reqData;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);

@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.openskyt.nostrrelay.model.Event;
-import org.springframework.web.socket.WebSocketSession;
 
 @Getter
 @Setter
@@ -21,9 +20,7 @@ public class EventData {
     private String sig;
 
     @JsonIgnore
-    private WebSocketSession session;
-    @JsonIgnore
-    private String subscription_id;
+    private Subscription subscription;
 
     public EventData(Event event) {
         this.id = event.getId();

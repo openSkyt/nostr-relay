@@ -13,13 +13,13 @@
   <button id="sendClose2" onclick="sendClose2()">Send Close 2</button>
   <script>
 
-      let socket = new WebSocket('ws://localhost:8080/nostr');
+      let socket = new WebSocket('ws://localhost:8080');
       const eventData = {
           "id": "9b0c1d2e3f4a5b6c7d8e9f0",
           "pubkey": "pubkey3",
           "created_at": 1632871,
           "kind": 1,
-          "tags": "tag1, tag2",
+          "tags": [],
           "content": "arbitrary content",
           "sig": "abcdef0123456789abcde"
       };
@@ -28,7 +28,7 @@
         "pubkey": "pubkey2",
         "created_at": 6666666,
         "kind": 1,
-        "tags": "tag1, tag2",
+        "tags": [],
         "content": "arbitrary content",
         "sig": "abcdef0123456789abcde"
       };
