@@ -82,32 +82,48 @@ public class NostrProtocol extends TextWebSocketHandler {
     }
 
     private void handleNewSubFeed(List<ReqData> reqDataList) {
-        WebSocketSession session = reqDataList.get(0).getSession();
-        String subscription_id = reqDataList.get(0).getSubscription_id();
+        Set<EventData> eventDataSet = new HashSet<>();
         for (EventData eventData : persistence.retrieveAllEvents()) {
-            try {
-                session.sendMessage(eventMessage(subscription_id, eventData));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            reqDataList.forEach(r -> {
+                eventDataSet.addAll(filterSubFeed(eventData, r));
+            });
         }
-        try {
-            session.sendMessage(eoseMessage(subscription_id));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        sendSubFeed(eventDataSet);
     }
 
     private void handleSubFeed(EventMessageData eventMessageData) {
+        Set<EventData> eventDataSet = new HashSet<>();
         for (Map.Entry<String, ReqData> entry : subs.entrySet()) {
             ReqData reqData = entry.getValue();
-            try {
-                reqData.getSession().sendMessage(eventMessage(reqData.getSubscription_id(), eventMessageData.eventData()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            eventDataSet.addAll(filterSubFeed(eventMessageData.eventData(), reqData));
         }
+        sendSubFeed(eventDataSet);
     }
+
+    private Set<EventData> filterSubFeed(EventData eventData, ReqData reqData) {
+        Set<EventData> e = new HashSet<>();
+        if (!reqData.getAuthors().isEmpty()) {
+            reqData.getAuthors().forEach(p -> {
+                if (p.equals(eventData.getPubkey())) {
+                    e.add(eventData);
+                    eventData.setSession(reqData.getSession());
+                    eventData.setSubscription_id(reqData.getSubscription_id());
+                }
+            });
+        }
+        return e;
+    }
+
+    private void sendSubFeed(Set<EventData> eventDataSet) {
+        eventDataSet.forEach(e -> {
+            try {
+                e.getSession().sendMessage(eventMessage(e.getSubscription_id(), e));
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+    }
+
 
     private void handleClose(CloseMessageData closeMessageData) {
         if (!subs.containsKey(closeMessageData.subscription_id())) {

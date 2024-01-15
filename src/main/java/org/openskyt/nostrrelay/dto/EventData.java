@@ -22,6 +22,8 @@ public class EventData {
 
     @JsonIgnore
     private WebSocketSession session;
+    @JsonIgnore
+    private String subscription_id;
 
     public EventData(Event event) {
         this.id = event.getId();

@@ -5,34 +5,57 @@
       <title>Very dumb NOSTR client</title>
   </head>
   <body>
-  <button id="sendMessageButton" onclick="sendEvent()">Send Event</button>
-  <button id="sendMessageButton2" onclick="sendReq()">Send Req</button>
+  <button id="sendEvent1" onclick="sendEvent()">Send Event</button>
+  <button id="sendEvent2" onclick="sendEvent2()">Send Event 2</button>
+  <button id="sendReq1" onclick="sendReq()">Send Req</button>
+  <button id="sendReq2" onclick="sendReq2()">Send Req 2</button>
   <button id="sendMessageButton3" onclick="sendClose()">Send Close</button>
   <script>
 
       let socket = new WebSocket('ws://localhost:8080/nostr');
       const eventData = {
-          "id": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0",
-          "pubkey": "04a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3",
+          "id": "9b0c1d2e3f4a5b6c7d8e9f0",
+          "pubkey": "pubkey3",
           "created_at": 1632871,
           "kind": 1,
           "tags": "tag1, tag2",
           "content": "arbitrary content",
           "sig": "abcdef0123456789abcde"
       };
+      const eventData2 = {
+        "id": "sesae3f4a5b6c7d8e9f0",
+        "pubkey": "pubkey2",
+        "created_at": 6666666,
+        "kind": 1,
+        "tags": "tag1, tag2",
+        "content": "arbitrary content",
+        "sig": "abcdef0123456789abcde"
+      };
       const reqData = {
           "ids": ["fedcba551", "aaaaaab"],
-          "authors": ["04a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3", "pubkey2", "pubkey3"],
+          "authors": ["d2e3f4a5b6c7d8e9f0a1b2c3", "pubkey2", "pubkey3"],
           "kinds": [0, 1],
           "#e": ["sdfs", "gzhh", "df"],
-          "#p": ["pubkey4", "pubkey5", "pubkey6"],
+          "#p": ["pubkey2", "pubkey5", "pubkey6"],
           "since": 1642156800,
           "until": 1642243200,
           "limit": 10
       }
+      const reqData2 = {
+        "ids": ["fedcba551", "aaaaaab"],
+        "authors": ["pubkey1"],
+        "kinds": [0, 1],
+        "#e": ["sdfs", "gzhh", "df"],
+        "#p": ["pubkey2", "pubkey5", "pubkey6"],
+        "since": 1642156800,
+        "until": 1642243200,
+        "limit": 10
+      }
 
       const eventMessage = JSON.stringify(["EVENT", eventData]);
+      const eventMessage2 = JSON.stringify(["EVENT", eventData2]);
       const reqMessage = JSON.stringify(["REQ", "sample_sub_id", reqData]);
+      const reqMessage2 = JSON.stringify(["REQ", "sample_sub_id", reqData2]);
       const closeMessage = JSON.stringify(["CLOSE", "sample_sub_id"]);
 
       socket.addEventListener('open', function (event) {
@@ -48,13 +71,23 @@
       });
 
       function sendEvent() {
-          console.log('Sending message:', eventMessage);
-          socket.send(eventMessage);
+        console.log('Sending message:', eventMessage);
+        socket.send(eventMessage);
+      }
+
+      function sendEvent2() {
+        console.log('Sending message:', eventMessage2);
+        socket.send(eventMessage2);
       }
 
       function sendReq() {
           console.log('Sending message:', reqMessage);
           socket.send(reqMessage);
+      }
+
+      function sendReq2() {
+        console.log('Sending message:', reqMessage2);
+        socket.send(reqMessage2);
       }
 
       function sendClose() {
