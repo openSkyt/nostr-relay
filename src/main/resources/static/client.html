@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>dummy</title>
+    <script src="https://bitcoincore.tech/apps/bitcoinjs-ui/lib/bitcoinjs-lib.js"></script>
+    <script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
+</head>
+<body>
+
+<h1>Dummy client, very cool.</h1>
+<p>Important: Fields below need the keys in hex value. Results for now will appear in the console.</p>
+
+<form>
+    <label> Private key
+        <input oninput="checkInput()" id="privateKey">
+    </label>
+    <label> Public key
+        <input oninput="checkInput()" id="publicKey">
+    </label>
+    <label> Relay
+        <input oninput="checkInput()" id="relay">
+    </label>
+    <label> Message
+        <input oninput="checkInput()" id="message">
+    </label>
+    <button type="button" id="sendButton" onclick="sendMessage()" disabled>Send!</button>
+</form>
+
+
+<p>
+    working credentials, copy & use as you please:<br>
+    private key: 4148b0040c190b1058d5e478d5406a237ebae15b8d22184dc5660c17232ce011<br>
+    public key: a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c<br>
+    relay: wss://relay.nostr.band/<br>
+    public key, but bech32: npub15g7vadw4t9hcpseynu27hne7gtr2hg9nez9274evqx9md3lxrqxqnps97z
+</p>
+
+<a href="https://flycat-web.vercel.app/user/a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c">
+    Link to a GUI where you can admire your extremely hard work</a>
+
+<script>
+    function checkInput() {
+        var privateKey = document.getElementById('privateKey').value;
+        var publicKey = document.getElementById('publicKey').value;
+        var relay = document.getElementById('relay').value;
+        var message = document.getElementById('message').value;
+        var button = document.getElementById('sendButton');
+
+        if (privateKey && relay && message && publicKey) {
+            button.disabled = false;
+        } else {
+            button.disabled = true;
+        }
+    }
+
+    function sendMessage() {
+        // Importing necessary modules
+        var {getSharedSecret, schnorr, utils} = nobleSecp256k1;
+        var crypto = window.crypto;
+        var getRand = size => crypto.getRandomValues(new Uint8Array(size));
+        var sha256 = bitcoinjs.crypto.sha256;
+
+        // Retrieving values from input fields
+        var privKey = document.getElementById("privateKey").value;
+        var pubKey = document.getElementById("publicKey").value;
+        var relay = document.getElementById("relay").value;
+        var socket = new WebSocket(relay);
+
+        // Handling incoming messages
+        socket.addEventListener('message', async function (message) {
+            // Parsing the incoming message
+            console.log(message.data)
+            //var [type, subId, event] = JSON.parse(message.data);
+            var {kind, content} = event || {};
+
+            // Logging the message and content
+            console.log('message:', event);
+
+            // Uncomment the following lines if decryption is required
+            // if (kind === 4) {
+            //    content = await decrypt(privKey, event.pubkey, content)
+            // }
+            console.log('content:', content);
+        });
+
+        // Generating a random subscription ID
+        var subId = bitcoinjs.ECPair.makeRandom().privateKey.toString("hex").substring(0, 16);
+        var filter = {"authors": [pubKey]};
+
+        // Handling the WebSocket connection
+        socket.addEventListener('open', async function (e) {
+            console.log("connected to " + relay);
+
+            // Sending a subscription request
+            var subscription = ["REQ", subId, filter];
+            console.log('Subscription:', subscription);
+            socket.send(JSON.stringify(subscription));
+
+            // Creating and sending a signed event
+            var event = {
+                "content": document.getElementById("message").value,
+                "created_at": Math.floor(Date.now() / 1000),
+                "kind": 1,
+                "tags": [],
+                "pubkey": pubKey,
+            };
+            var signedEvent = await getSignedEvent(event, privKey);
+            console.log('signedEvent:', signedEvent);
+            socket.send(JSON.stringify(["EVENT", signedEvent]));
+        });
+
+        // Function to get a signed event
+        async function getSignedEvent(event, privateKey) {
+            var eventData = JSON.stringify([
+                0,                      // Reserved for future use
+                event['pubkey'],        // The sender's public key
+                event['created_at'],    // Unix timestamp
+                event['kind'],          // Message “kind” or type
+                event['tags'],          // Tags identify replies/recipients
+                event['content']        // Your note contents
+            ]);
+            event.id = sha256(eventData).toString('hex');
+            event.sig = await schnorr.sign(event.id, privateKey);
+            return event;
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -18,7 +18,7 @@ public class NostrProtocol extends TextWebSocketHandler {
 
     private final NostrPersistence persistence;
     private final NostrDeserializer deserializer = new NostrDeserializer();
-    private final Map<String, ReqData> subs = new HashMap<>();
+    private final Map<Subscription, ReqData> subs = new HashMap<>();
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
 
     @Override
@@ -37,10 +37,10 @@ public class NostrProtocol extends TextWebSocketHandler {
 
         String payload = message.getPayload();
         System.out.println("Incoming message: " + payload);
-        handleMessage(payload, session);
+        handleMessage(session, payload);
     }
 
-    private void handleMessage(String messageJSON, WebSocketSession session) {
+    private void handleMessage(WebSocketSession session, String messageJSON) {
         Object[] message;
         try {
             message = deserializer.getMapper().readValue(messageJSON, Object[].class);
@@ -69,12 +69,13 @@ public class NostrProtocol extends TextWebSocketHandler {
     }
 
     private void handleReq(ReqMessageData reqMessageData) {
-        if (subs.containsKey(reqMessageData.subscription_id())) {
+        Subscription subscription = new Subscription(reqMessageData.subscription_id(), reqMessageData.reqData().get(0).getSession());
+        if (subs.containsKey(subscription)) {
             System.out.println("rewriting current sub..");
-            subs.remove(reqMessageData.subscription_id());
+            subs.remove(subscription);
         }
         for (ReqData req : reqMessageData.reqData()) {
-            subs.put(reqMessageData.subscription_id(), req);
+            subs.put(subscription, req);
         }
         System.out.println("new subscription added!");
         System.out.println("current subs size: " + subs.size());
@@ -82,18 +83,23 @@ public class NostrProtocol extends TextWebSocketHandler {
     }
 
     private void handleNewSubFeed(List<ReqData> reqDataList) {
+        WebSocketSession session = reqDataList.get(0).getSession();
+        String subscription_id = reqDataList.get(0).getSubscription_id();
         Set<EventData> eventDataSet = new HashSet<>();
         for (EventData eventData : persistence.retrieveAllEvents()) {
-            reqDataList.forEach(r -> {
-                eventDataSet.addAll(filterSubFeed(eventData, r));
-            });
+            reqDataList.forEach(r -> eventDataSet.addAll(filterSubFeed(eventData, r)));
         }
         sendSubFeed(eventDataSet);
+        try {
+            session.sendMessage(eoseMessage(subscription_id));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void handleSubFeed(EventMessageData eventMessageData) {
         Set<EventData> eventDataSet = new HashSet<>();
-        for (Map.Entry<String, ReqData> entry : subs.entrySet()) {
+        for (Map.Entry<Subscription, ReqData> entry : subs.entrySet()) {
             ReqData reqData = entry.getValue();
             eventDataSet.addAll(filterSubFeed(eventMessageData.eventData(), reqData));
         }
@@ -126,12 +132,13 @@ public class NostrProtocol extends TextWebSocketHandler {
 
 
     private void handleClose(CloseMessageData closeMessageData) {
-        if (!subs.containsKey(closeMessageData.subscription_id())) {
+        Subscription subscription = new Subscription(closeMessageData.subscription_id(), closeMessageData.session());
+        if (!subs.containsKey(subscription)) {
             System.out.println("No sub like that found..");
             System.out.println("current subs size: " + subs.size());
             return;
         }
-        subs.remove(closeMessageData.subscription_id());
+        subs.remove(subscription);
         System.out.println("subscription removed!");
         System.out.println("current subs size: " + subs.size());
     }
@@ -144,9 +151,6 @@ public class NostrProtocol extends TextWebSocketHandler {
         try {
             persistence.saveEvent(eventData);
             eventData.getSession().sendMessage(okMessage(eventData.getId(), true));
-            if (persistence.retrieveEvent(eventData.getId()) == null) {
-                eventData.getSession().sendMessage(okMessage(eventData.getId(), false));
-            }
         } catch (Exception e) {
             System.out.println("Session closed");
         }
@@ -165,6 +169,6 @@ public class NostrProtocol extends TextWebSocketHandler {
     }
 
     private TextMessage eoseMessage(String subscription_id) {
-        return new TextMessage("[\"EOSE\",\"" + subscription_id + "]");
+        return new TextMessage("[\"EOSE\",\"" + subscription_id + "\"]");
     }
 }

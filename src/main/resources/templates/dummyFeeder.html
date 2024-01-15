@@ -9,7 +9,8 @@
   <button id="sendEvent2" onclick="sendEvent2()">Send Event 2</button>
   <button id="sendReq1" onclick="sendReq()">Send Req</button>
   <button id="sendReq2" onclick="sendReq2()">Send Req 2</button>
-  <button id="sendMessageButton3" onclick="sendClose()">Send Close</button>
+  <button id="sendClose" onclick="sendClose()">Send Close</button>
+  <button id="sendClose2" onclick="sendClose2()">Send Close 2</button>
   <script>
 
       let socket = new WebSocket('ws://localhost:8080/nostr');
@@ -55,8 +56,9 @@
       const eventMessage = JSON.stringify(["EVENT", eventData]);
       const eventMessage2 = JSON.stringify(["EVENT", eventData2]);
       const reqMessage = JSON.stringify(["REQ", "sample_sub_id", reqData]);
-      const reqMessage2 = JSON.stringify(["REQ", "sample_sub_id", reqData2]);
+      const reqMessage2 = JSON.stringify(["REQ", "sample_sub_id2", reqData2]);
       const closeMessage = JSON.stringify(["CLOSE", "sample_sub_id"]);
+      const closeMessage2 = JSON.stringify(["CLOSE", "sample_sub_id2"]);
 
       socket.addEventListener('open', function (event) {
         console.log('WebSocket connection opened:', event);
@@ -93,6 +95,11 @@
       function sendClose() {
           console.log('Sending message:', closeMessage);
           socket.send(closeMessage);
+      }
+
+      function sendClose2() {
+        console.log('Sending message:', closeMessage2);
+        socket.send(closeMessage2);
       }
 
     </script>
