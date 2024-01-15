@@ -3,6 +3,7 @@ package org.openskyt.nostrrelay.nostr;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openskyt.nostrrelay.dto.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -14,6 +15,7 @@ import java.util.*;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class NostrController extends TextWebSocketHandler {
 
     private final NostrPersistence persistence;
@@ -36,7 +38,7 @@ public class NostrController extends TextWebSocketHandler {
                                   TextMessage message) {
 
         String payload = message.getPayload();
-        System.out.println("Incoming message: " + payload);
+        log.warn("Incoming message: " + payload);
         handleMessage(session, payload);
     }
 
@@ -45,6 +47,7 @@ public class NostrController extends TextWebSocketHandler {
         try {
             message = deserializer.getMapper().readValue(messageJSON, Object[].class);
         } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
             throw new RuntimeException(e);
         }
         switch (message[0].toString()) {
