@@ -14,7 +14,7 @@ import java.util.*;
 
 @Component
 @RequiredArgsConstructor
-public class NostrProtocol extends TextWebSocketHandler {
+public class NostrController extends TextWebSocketHandler {
 
     private final NostrPersistence persistence;
     private final NostrDeserializer deserializer = new NostrDeserializer();
@@ -109,13 +109,11 @@ public class NostrProtocol extends TextWebSocketHandler {
     private Set<EventData> filterSubFeed(EventData eventData, ReqData reqData) {
         Set<EventData> e = new HashSet<>();
         if (!reqData.getAuthors().isEmpty()) {
-            reqData.getAuthors().forEach(p -> {
-                if (p.equals(eventData.getPubkey())) {
-                    e.add(eventData);
-                    eventData.setSession(reqData.getSession());
-                    eventData.setSubscription_id(reqData.getSubscription_id());
-                }
-            });
+            if (reqData.getAuthors().contains(eventData.getPubkey())) {
+                e.add(eventData);
+                eventData.setSession(reqData.getSession());
+                eventData.setSubscription_id(reqData.getSubscription_id());
+            }
         }
         return e;
     }

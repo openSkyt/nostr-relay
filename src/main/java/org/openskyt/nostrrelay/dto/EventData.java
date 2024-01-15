@@ -16,7 +16,7 @@ public class EventData {
     private String pubkey;
     private long created_at;
     private int kind;
-    private String tags;
+    private String[][] tags;
     private String content;
     private String sig;
 

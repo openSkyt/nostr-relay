@@ -7,6 +7,7 @@ import lombok.Setter;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -14,7 +15,7 @@ import java.util.List;
 public class ReqData {
 
     private List<String> ids;
-    private List<String> authors;
+    private Set<String> authors;
     private List<Integer> kinds;
     @JsonProperty("#e")
     private List<String> e;

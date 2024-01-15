@@ -13,13 +13,13 @@
 
 <form>
     <label> Private key
-        <input oninput="checkInput()" id="privateKey">
+        <input oninput="checkInput()" id="privateKey" value="4148b0040c190b1058d5e478d5406a237ebae15b8d22184dc5660c17232ce011">
     </label>
     <label> Public key
-        <input oninput="checkInput()" id="publicKey">
+        <input oninput="checkInput()" id="publicKey" value="a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c">
     </label>
     <label> Relay
-        <input oninput="checkInput()" id="relay">
+        <input oninput="checkInput()" id="relay" value="ws://localhost:8080">
     </label>
     <label> Message
         <input oninput="checkInput()" id="message">
@@ -71,7 +71,7 @@
         socket.addEventListener('message', async function (message) {
             // Parsing the incoming message
             console.log(message.data)
-            //var [type, subId, event] = JSON.parse(message.data);
+            var [type, subId, event] = JSON.parse(message.data);
             var {kind, content} = event || {};
 
             // Logging the message and content

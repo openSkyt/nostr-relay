@@ -15,12 +15,12 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final NostrPersistence persistence;
 
     @Bean
-    public NostrProtocol nostrProtocol() {
-        return new NostrProtocol(persistence);
+    public NostrController nostrProtocol() {
+        return new NostrController(persistence);
     }
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(nostrProtocol(), "/nostr").setAllowedOrigins("*");
+        registry.addHandler(nostrProtocol(), "/").setAllowedOrigins("*");
     }
 }
