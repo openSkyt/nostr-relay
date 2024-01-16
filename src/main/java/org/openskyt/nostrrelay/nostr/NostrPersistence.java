@@ -7,6 +7,7 @@ import org.openskyt.nostrrelay.model.EventRepo;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -30,6 +31,14 @@ public class NostrPersistence {
         return repo.findAll().stream()
                 .map(EventData::new)
                 .collect(Collectors.toList());
+    }
+
+    public Optional<EventData> findByPubkey(String pubkey) {
+        return repo.findByPubkey(pubkey).map(EventData::new);
+    }
+
+    public void delete(EventData eventData) {
+        repo.deleteById(eventData.getId());
     }
 
     public void dbLog(EventData eventData) {

@@ -44,7 +44,7 @@ public class NostrController extends TextWebSocketHandler {
     }
 
     /**
-     * Handles incoming generic message by checking NOSTR compatible types and invoking proper handling logic if any.
+     * Handles incoming generic message by checking NOSTR compatible types and invoking proper handling logic.
      * @param session
      * current ws-session
      * @param messageJSON
@@ -108,14 +108,20 @@ public class NostrController extends TextWebSocketHandler {
         switch (eventData.getKind()) {
             case 0      : handleEvent_0(eventData); break;
             case 1      : handleEvent_1(eventData); break;
-            default     : System.err.println("Unsupported kind received");
+            default     :
+                try {
+                    eventData.getSubscription().session().sendMessage(noticeMessage("Unknown event kind"));
+                } catch (IOException e) {
+                    System.out.println("Unknown event kind!");
+                    throw new RuntimeException(e);
+                }
         }
     }
 
     // SUBSCRIPTION
 
     /**
-     * Feeds newly created subscription with REQuested existing EVENT-data
+     * Feeds newly created subscription with REQuested retrieved existing EVENT-data
      * @param reqDataSet
      * incoming REQ-data SET
      */
@@ -167,8 +173,8 @@ public class NostrController extends TextWebSocketHandler {
                 eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
                 validEventData.add(eventData);
             }
-            // filter for ids (event ids)
-            if (r.getIds() != null && r.getIds().contains(eventData.getId())) {
+            // filter for kinds (event kinds)
+            if (r.getKinds() != null && r.getKinds().contains(eventData.getKind())) {
                 eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
                 validEventData.add(eventData);
             }
@@ -194,12 +200,28 @@ public class NostrController extends TextWebSocketHandler {
     // EVENTS
 
     /**
-     * Handles EVENT-kind 0
+     * Handles EVENT-kind 0 by checking redundancy, saves to DB. Responds with OK-message
      * @param eventData
      * incoming EVENT-data
      */
     private void handleEvent_0(EventData eventData) {
-        System.out.println("Event kind 0 received!" + eventData);
+        Optional<EventData> optEventData = persistence.findByPubkey(eventData.getPubkey());
+        // remove redundant data, send NOTICE message
+        if (optEventData.isPresent()) {
+            persistence.delete(optEventData.get());
+            try {
+                eventData.getSubscription().session().sendMessage(noticeMessage("metadata updated"));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        // save new data, send OK message
+        persistence.saveEvent(eventData);
+        try {
+            eventData.getSubscription().session().sendMessage(okMessage(eventData, true));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
