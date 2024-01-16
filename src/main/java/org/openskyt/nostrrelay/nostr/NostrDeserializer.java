@@ -99,7 +99,7 @@ public class NostrDeserializer {
      * @return
      * EVENT-data
      */
-    public EventData deserializeEvent(WebSocketSession session, String eventJSON) {
+    private EventData deserializeEvent(WebSocketSession session, String eventJSON) {
         try {
             EventData eventData = mapper.readValue(eventJSON, EventData.class);
             eventData.setSubscription(new Subscription(null, session));
