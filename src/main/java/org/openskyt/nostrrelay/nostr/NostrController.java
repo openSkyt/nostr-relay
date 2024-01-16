@@ -20,7 +20,7 @@ public class NostrController extends TextWebSocketHandler {
 
     private final NostrPersistence persistence;
     private final NostrDeserializer deser = new NostrDeserializer();
-    private final Map<Subscription, ReqData> subs = new HashMap<>();
+    private final Map<Subscription, Set<ReqData>> subs = new HashMap<>();
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
 
     @Override
@@ -29,7 +29,9 @@ public class NostrController extends TextWebSocketHandler {
     }
 
     @Override
-    public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull org.springframework.web.socket.CloseStatus status) {
+    public void afterConnectionClosed(@NonNull WebSocketSession session,
+                                      @NonNull org.springframework.web.socket.CloseStatus status) {
+
         sessions.remove(session);
     }
 
@@ -38,7 +40,6 @@ public class NostrController extends TextWebSocketHandler {
                                   TextMessage message) {
 
         String payload = message.getPayload();
-        log.warn("Incoming message: " + payload);
         handleMessage(session, payload);
     }
 
@@ -63,29 +64,26 @@ public class NostrController extends TextWebSocketHandler {
                                   handleEvent(eventData); // handling method
                                   handleSubFeed(eventData); // after receiving event -> broadcast
                                   break;
-                default         : System.err.println("Invalid NOSTR message received");
+                default         : session.sendMessage(noticeMessage("invalid NOSTR message"));
             }
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             log.error(e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
+    // HANDLING METHODS
+
     /**
-     * Handles NOSTR REQ-message by adding a subscription and sends EVENT feed for a new valid subscription back.
+     * Handles a NOSTR REQ-message by adding a new subscription to subs then sends EVENT feed for a new valid subscription back.
      * @param reqDataSet
      * parsed REQ-Message data SET
      */
     private void handleReq(Set<ReqData> reqDataSet) {
-        reqDataSet.forEach(r -> {
-            if (subs.containsKey(r.getSubscription())) {
-                subs.remove(r.getSubscription());
-                System.out.println("Sub rewrite");
-            }
-            subs.put(r.getSubscription(), r);
-            System.out.println("new subscription added!");
-
-        });
+        Subscription subscription = reqDataSet.iterator().next().getSubscription();
+        if (subs.containsKey(subscription)) {
+            subs.put(subscription, reqDataSet);
+        }
         handleNewSubFeed(reqDataSet);
     }
 
@@ -102,7 +100,7 @@ public class NostrController extends TextWebSocketHandler {
     }
 
     /**
-     * Handles NOSTR EVENT-message by distributing EVENT-data to a proper logic-handling method by EVENT-kind
+     * Handles NOSTR EVENT-message by distributing EVENT-data to a proper logic-handling method defined by EVENT-kind
      * @param eventData
      * parsed EVENT-message data
      */
@@ -114,27 +112,27 @@ public class NostrController extends TextWebSocketHandler {
         }
     }
 
+    // SUBSCRIPTION
+
     /**
      * Feeds newly created subscription with REQuested existing EVENT-data
      * @param reqDataSet
      * incoming REQ-data SET
      */
     private void handleNewSubFeed(Set<ReqData> reqDataSet) {
-        Set<EventData> eventDataSet = new HashSet<>();
-        // filter db-events
+        Set<EventData> validEventData = new HashSet<>();
+        // filter db-events with filterSubFeed()
         for (EventData eventData : persistence.retrieveAllEvents()) {
-            reqDataSet.forEach(r -> eventDataSet.addAll(filterSubFeed(eventData, r)));
+            validEventData.addAll(filterSubFeed(eventData, reqDataSet));
         }
-        // send feed and eose for each subscription
-        sendSubFeed(eventDataSet);
-        reqDataSet.forEach(r -> {
-            try {
-                r.getSubscription().session().sendMessage(eoseMessage(r));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
+        // send feed and single eose for subscription
+        sendSubFeed(validEventData);
+        WebSocketSession session = reqDataSet.iterator().next().getSubscription().session();
+        try {
+            session.sendMessage(eoseMessage(reqDataSet));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -143,36 +141,43 @@ public class NostrController extends TextWebSocketHandler {
      * examined EVENT-data to filter
      */
     private void handleSubFeed(EventData eventData) {
-        Set<EventData> eventDataSet = new HashSet<>();
-        for (Map.Entry<Subscription, ReqData> entry : subs.entrySet()) {
-            ReqData reqData = entry.getValue();
-            eventDataSet.addAll(filterSubFeed(eventData, reqData));
+        Set<EventData> validEventData = new HashSet<>();
+        // filter incoming event by each ReqData in Map<Subscription, Set<ReqData>> - for each sub individually
+        for (Map.Entry<Subscription, Set<ReqData>> entry : subs.entrySet()) {
+            Set<ReqData> reqDataSet = entry.getValue();
+            validEventData.addAll(filterSubFeed(eventData, reqDataSet));
         }
-        sendSubFeed(eventDataSet);
+        sendSubFeed(validEventData);
     }
 
     /**
-     * Compares EVENT-data to REQ-data specifics
+     * Compares EVENT-data to REQ-data specifics. Sets the right subscription data to event after filtering. Note there might be more REQ-data for single subscription (sub method)
      * @param eventData
      * EVENT-data to examine
-     * @param reqData
-     * REQ-data to filter by
+     * @param reqDataSet
+     * REQ-data SET to filter by
      * @return
      * compatible EVENT-data
      */
-    private Set<EventData> filterSubFeed(EventData eventData, ReqData reqData) {
+    private Set<EventData> filterSubFeed(EventData eventData, Set<ReqData> reqDataSet) {
         Set<EventData> validEventData = new HashSet<>();
-        if (!reqData.getAuthors().isEmpty()) {
-            if (reqData.getAuthors().contains(eventData.getPubkey())) {
-                eventData.setSubscription(reqData.getSubscription());
+        reqDataSet.forEach(r -> {
+            // filter for authors (event pub-keys)
+            if (r.getAuthors() != null && r.getAuthors().contains(eventData.getPubkey())) {
+                eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
                 validEventData.add(eventData);
             }
-        }
+            // filter for ids (event ids)
+            if (r.getIds() != null && r.getIds().contains(eventData.getId())) {
+                eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
+                validEventData.add(eventData);
+            }
+        });
         return validEventData;
     }
 
     /**
-     * Sends EVENT-data SET to client
+     * Sends EVENT-data SET to client (sub method)
      * @param eventDataSet
      * EventData to send to client
      */
@@ -186,8 +191,10 @@ public class NostrController extends TextWebSocketHandler {
         });
     }
 
+    // EVENTS
+
     /**
-     * Handles EVENT-messages kind 0
+     * Handles EVENT-kind 0
      * @param eventData
      * incoming EVENT-data
      */
@@ -196,7 +203,7 @@ public class NostrController extends TextWebSocketHandler {
     }
 
     /**
-     * Handles EVENT-messages kind 1 by saving into the DB. Responds with OK-message.
+     * Handles EVENT-kind 1 by saving into the DB. Responds with OK-message.
      * @param eventData
      * incoming EVENT-data
      */
@@ -208,6 +215,8 @@ public class NostrController extends TextWebSocketHandler {
             System.err.println("Session closed");
         }
     }
+
+    // MESSAGES
 
     /**
      * Parses NOSTR OK-message to be sent to client
@@ -231,7 +240,8 @@ public class NostrController extends TextWebSocketHandler {
      */
     private TextMessage eventMessage(EventData eventData) {
         try {
-            return new TextMessage("[\"EVENT\",\"" + eventData.getSubscription().subscription_id() + "\"," + deser.getMapper().writeValueAsString(eventData) + "]");
+            return new TextMessage("[\"EVENT\",\"" + eventData.getSubscription().subscription_id() + "\","
+                    + deser.getMapper().writeValueAsString(eventData) + "]");
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -239,12 +249,16 @@ public class NostrController extends TextWebSocketHandler {
 
     /**
      * Parses NOSTR EOSE-message to be sent to client
-     * @param reqData
-     * REQ-data related to subscription
+     * @param reqDataSet
+     * REQ-data SET related to subscription
      * @return
      * TextMessage to be sent by WebSocketSession
      */
-    private TextMessage eoseMessage(ReqData reqData) {
-        return new TextMessage("[\"EOSE\",\"" + reqData.getSubscription().subscription_id() + "\"]");
+    private TextMessage eoseMessage(Set<ReqData> reqDataSet) {
+        return new TextMessage("[\"EOSE\",\"" + reqDataSet.stream().findAny().get().getSubscription().subscription_id() + "\"]");
+    }
+
+    private TextMessage noticeMessage(String message) {
+        return new TextMessage("[\"NOTICE\",\"" + message + "\"]");
     }
 }

@@ -11,43 +11,46 @@
   <button id="sendReq2" onclick="sendReq2()">Send Req 2</button>
   <button id="sendClose" onclick="sendClose()">Send Close</button>
   <button id="sendClose2" onclick="sendClose2()">Send Close 2</button>
+  <button id="sendReq3" onclick="sendReq3()">Send Req 3</button>
+  <button id="sendClose3" onclick="sendClose3()">Send Close 3</button>
+  <button id="sendInvalid" onclick="sendInvalid()">Invalid</button>
   <script>
 
       let socket = new WebSocket('ws://localhost:8080');
       const eventData = {
-          "id": "9b0c1d2e3f4a5b6c7d8e9f0",
+          "id": "id10",
           "pubkey": "pubkey3",
           "created_at": 1632871,
           "kind": 1,
           "tags": [],
-          "content": "arbitrary content",
-          "sig": "abcdef0123456789abcde"
+          "content": "cool content",
+          "sig": "xyz"
       };
       const eventData2 = {
-        "id": "sesae3f4a5b6c7d8e9f0",
+        "id": "id11",
         "pubkey": "pubkey2",
         "created_at": 6666666,
         "kind": 1,
         "tags": [],
-        "content": "arbitrary content",
-        "sig": "abcdef0123456789abcde"
+        "content": "not so cool content",
+        "sig": "abc"
       };
       const reqData = {
-          "ids": ["fedcba551", "aaaaaab"],
-          "authors": ["d2e3f4a5b6c7d8e9f0a1b2c3", "pubkey2", "pubkey3"],
+          "ids": ["id1", "id2"],
+          "authors": ["pubkey2", "pubkey3"],
           "kinds": [0, 1],
-          "#e": ["sdfs", "gzhh", "df"],
-          "#p": ["pubkey2", "pubkey5", "pubkey6"],
+          "#e": ["e2", "e3"],
+          "#p": ["pubkey5", "pubkey6"],
           "since": 1642156800,
           "until": 1642243200,
           "limit": 10
       }
       const reqData2 = {
-        "ids": ["fedcba551", "aaaaaab"],
+        "ids": ["id3", "id4"],
         "authors": ["pubkey1"],
         "kinds": [0, 1],
-        "#e": ["sdfs", "gzhh", "df"],
-        "#p": ["pubkey2", "pubkey5", "pubkey6"],
+        "#e": ["e1", "e4"],
+        "#p": ["pubkey2", "pubkey5"],
         "since": 1642156800,
         "until": 1642243200,
         "limit": 10
@@ -59,6 +62,9 @@
       const reqMessage2 = JSON.stringify(["REQ", "sample_sub_id2", reqData2]);
       const closeMessage = JSON.stringify(["CLOSE", "sample_sub_id"]);
       const closeMessage2 = JSON.stringify(["CLOSE", "sample_sub_id2"]);
+      const reqMessage3 = JSON.stringify(["REQ", "sample_sub_id3", reqData, reqData2]);
+      const closeMessage3 = JSON.stringify(["CLOSE", "sample_sub_id3"]);
+      const invalidMessage = JSON.stringify("invalid message");
 
       socket.addEventListener('open', function (event) {
         console.log('WebSocket connection opened:', event);
@@ -92,6 +98,11 @@
         socket.send(reqMessage2);
       }
 
+      function sendReq3() {
+        console.log('Sending message:', reqMessage3);
+        socket.send(reqMessage3);
+      }
+
       function sendClose() {
           console.log('Sending message:', closeMessage);
           socket.send(closeMessage);
@@ -100,6 +111,16 @@
       function sendClose2() {
         console.log('Sending message:', closeMessage2);
         socket.send(closeMessage2);
+      }
+
+      function sendClose3() {
+        console.log('Sending message:', closeMessage3);
+        socket.send(closeMessage3);
+      }
+
+      function sendInvalid() {
+        console.log('Sending message:', invalidMessage);
+        socket.send(invalidMessage);
       }
 
     </script>

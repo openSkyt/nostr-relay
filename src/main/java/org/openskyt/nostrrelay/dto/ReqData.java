@@ -5,26 +5,32 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
+// note there might be multiple instances deserialized from a single message
 public class ReqData {
 
-    private List<String> ids;
+    private Set<String> ids;
     private Set<String> authors;
-    private List<Integer> kinds;
+    private Set<Integer> kinds;
     @JsonProperty("#e")
-    private List<String> e;
+    private Set<String> e;
     @JsonProperty("#p")
-    private List<String> p;
+    private Set<String> p;
     private long since;
     private long until;
     private long limit;
 
     private Subscription subscription;
+
+    public ReqData(String authorId) {
+        this.authors = Set.of(authorId);
+    }
 }
 
 
