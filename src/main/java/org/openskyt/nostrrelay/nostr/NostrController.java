@@ -168,13 +168,8 @@ public class NostrController extends TextWebSocketHandler {
     private Set<EventData> filterSubFeed(EventData eventData, Set<ReqData> reqDataSet) {
         Set<EventData> validEventData = new HashSet<>();
         reqDataSet.forEach(r -> {
-            // filter for authors (event pub-keys)
-            if (r.getAuthors() != null && r.getAuthors().contains(eventData.getPubkey())) {
-                eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
-                validEventData.add(eventData);
-            }
             // filter for kinds (event kinds)
-            if (r.getKinds() != null && r.getKinds().contains(eventData.getKind())) {
+            if ((r.getKinds() != null || r.getKinds().isEmpty()) && r.getKinds().contains(eventData.getKind())) {
                 eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
                 validEventData.add(eventData);
             }
@@ -280,6 +275,13 @@ public class NostrController extends TextWebSocketHandler {
         return new TextMessage("[\"EOSE\",\"" + reqDataSet.stream().findAny().get().getSubscription().subscription_id() + "\"]");
     }
 
+    /**
+     * Parses NOSTR NOTICE-message to be sent to cliend
+     * @param message
+     * info payload
+     * @return
+     * TextMessage to be sent to client
+     */
     private TextMessage noticeMessage(String message) {
         return new TextMessage("[\"NOTICE\",\"" + message + "\"]");
     }
