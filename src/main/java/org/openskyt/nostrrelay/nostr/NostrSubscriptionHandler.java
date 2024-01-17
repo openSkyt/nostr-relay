@@ -97,6 +97,7 @@ public class NostrSubscriptionHandler {
      */
     private Set<EventData> filterSubFeed(EventData eventData, Set<ReqData> reqDataSet) {
         Set<EventData> validEventData = new HashSet<>();
+        if (reqDataSet == null) return validEventData;
         reqDataSet.forEach(r -> {
             // combine all conditions
             if ((r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(eventData.getKind()))                  // kinds filter

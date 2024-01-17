@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * This class serves as a repo manager - we can work out db solutions while not breaking another code
+ */
 @Component
 @RequiredArgsConstructor
 public class NostrPersistence {
@@ -42,8 +45,7 @@ public class NostrPersistence {
     }
 
     public void dbLog(EventData eventData) {
-        System.out.println("nostr db log --------------------------------------");
-        System.out.println("db: currently saved events: " + getEventCount());
+        System.out.println("Currently saved events: " + getEventCount());
         if (repo.findById(eventData.getId()).isPresent()) {
             System.out.println("db: last saved event: " + retrieveEvent(eventData.getId()).toString());
         }

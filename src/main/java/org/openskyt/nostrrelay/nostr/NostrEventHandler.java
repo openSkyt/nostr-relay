@@ -18,7 +18,7 @@ public class NostrEventHandler {
     private final NostrUtil util;
 
     /**
-     * Handles EVENT by distributing EVENT-data to a proper logic-handling method defined by EVENT-kind
+     * Handles EVENT by delegating EVENT-data to a proper logic-handling method defined by EVENT-kind
      * @param eventData
      * parsed EVENT-message data
      */
