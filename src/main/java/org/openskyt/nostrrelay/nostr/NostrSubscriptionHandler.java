@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Handles REQ and CLOSE data, creates subscriptions, sends subscription feed
+ * Handles REQ and CLOSE data, manages subscriptions, sends subscription feed
  */
 @Component
 @RequiredArgsConstructor
@@ -26,11 +26,11 @@ public class NostrSubscriptionHandler {
     private final Map<Subscription, Set<ReqData>> subs = new HashMap<>();
 
     /**
-     * Handles REQ-message by adding a new subscription to subs then sends EVENT feed for a new valid subscription back.
+     * Handles REQ-message by adding a new subscription to subs then sends EVENT feed for a new subscription back.
      * @param reqDataSet
      * parsed REQ-Message data SET
      */
-    public void handleReq(Set<ReqData> reqDataSet) {
+    public void handleReq(Set<ReqData> reqDataSet) { // one REQ message may contain more than one ReqData (filter)
         Subscription subscription = reqDataSet.iterator().next().getSubscription();
         if (subs.containsKey(subscription)) {
             subs.put(subscription, reqDataSet);
@@ -87,7 +87,7 @@ public class NostrSubscriptionHandler {
     }
 
     /**
-     * Compares EVENT-data to REQ-data specifics. Sets the right subscription data to event after filtering. Note there might be more REQ-data for single subscription (sub method)
+     * Compares EVENT-data to REQ-data specifics. Sets the right subscription data to event after filtering. Note there might be more REQ-data for single subscription. This method is meant to be cast inside subscription handling methods. (sub method)
      * @param eventData
      * EVENT-data to examine
      * @param reqDataSet
@@ -98,10 +98,15 @@ public class NostrSubscriptionHandler {
     private Set<EventData> filterSubFeed(EventData eventData, Set<ReqData> reqDataSet) {
         Set<EventData> validEventData = new HashSet<>();
         reqDataSet.forEach(r -> {
-            // filter for kinds (event kinds)
-            if ((r.getKinds() != null || r.getKinds().isEmpty()) && r.getKinds().contains(eventData.getKind())) {
+            // combine all conditions
+            if ((r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(eventData.getKind()))                  // kinds filter
+                    && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(eventData.getPubkey()))   // authors filter
+                    && (r.getIds() == null || r.getIds().isEmpty() || r.getIds().contains(eventData.getId()))                   // ids filter
+                    && (r.getSince() <= eventData.getCreated_at())                                                              // since filter
+                    && (r.getUntil() >= eventData.getCreated_at())) {                                                           // until
+
                 eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
-                validEventData.add(eventData);
+                validEventData.add(eventData); // returning set solves NullPointerException if element is filtered out
             }
         });
         return validEventData;

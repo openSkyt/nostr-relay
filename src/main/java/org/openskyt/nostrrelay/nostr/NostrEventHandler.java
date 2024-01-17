@@ -74,5 +74,4 @@ public class NostrEventHandler {
             System.err.println("Session closed");
         }
     }
-
 }

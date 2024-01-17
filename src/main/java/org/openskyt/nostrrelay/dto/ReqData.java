@@ -27,10 +27,4 @@ public class ReqData {
     private long limit;
 
     private Subscription subscription;
-
-    public ReqData(String authorId) {
-        this.authors = Set.of(authorId);
-    }
 }
-
-

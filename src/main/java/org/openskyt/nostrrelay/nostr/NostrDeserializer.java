@@ -10,6 +10,9 @@ import org.springframework.web.socket.WebSocketSession;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * Used to deserialize NOSTR-messages into Java DTO
+ */
 @Getter
 @Component
 public class NostrDeserializer {
@@ -17,7 +20,7 @@ public class NostrDeserializer {
     private final ObjectMapper mapper = new ObjectMapper();
 
     /**
-     * Deserializes incoming EVENT-message into EVENT-data object, adds session info. (uses sub method)
+     * Deserializes incoming EVENT-message into EVENT-data object, adds session info. (uses sub method deserializeEvent())
      * @param session
      * current ws session
      * @param messageJSON
@@ -32,13 +35,13 @@ public class NostrDeserializer {
                 return deserializeEvent(session, mapper.writeValueAsString(messageData[1]));
             }
         } catch (Exception e) {
-            throw new RuntimeException();
+            e.printStackTrace();
         }
         return null;
     }
 
     /**
-     * Deserializes incoming REQ-message to SET of REQ-data objects, adds subscription info. (uses sub method)
+     * Deserializes incoming REQ-message into SET of REQ-data objects, adds subscription info. (uses sub method deserializeReq()) Note: there might be more ReqData in a single REQ-message that is why we use Set
      * @param session
      * current ws session
      * @param messageJSON
@@ -95,7 +98,7 @@ public class NostrDeserializer {
      * @param session
      * current ws session
      * @param eventJSON
-     * extracted EVENT json
+     * incoming extracted EVENT json
      * @return
      * EVENT-data
      */

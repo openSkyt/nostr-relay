@@ -9,17 +9,16 @@
   <button id="sendEvent2" onclick="sendEvent2()">Send Event 2</button>
   <button id="sendKind0_1" onclick="sendKind0()">Send kind 0</button>
   <button id="sendKind0_2" onclick="sendKind0_2()">Send kind 0</button>
-  <button id="sendReq1" onclick="sendReq()">Send Req</button>
-  <button id="sendReq2" onclick="sendReq2()">Send Req 2</button>
+  <button id="sendReq1" onclick="sendReq()">Req metadata</button>
+  <button id="sendReq2" onclick="sendReq2()">Req events</button>
   <button id="sendReq3" onclick="sendReq3()">Send Req 3</button>
   <button id="sendReqKind0" onclick="reqKind0()">Send Req kind 0</button>
   <button id="sendClose" onclick="sendClose()">Send Close</button>
   <button id="sendClose2" onclick="sendClose2()">Send Close 2</button>
-  <button id="sendClose3" onclick="sendClose3()">Send Close 3</button>
   <button id="sendInvalid" onclick="sendInvalid()">Invalid</button>
   <script>
 
-      let socket = new WebSocket('ws://localhost:8080');
+      let socket = new WebSocket('wss://hipstr.cz');
       const eventData = {
           "id": "id10",
           "pubkey": "pubkey3",
@@ -57,32 +56,32 @@
         "sig": "abc"
       };
       const reqData = {
-          "ids": ["id1", "id2"],
-          "authors": ["pubkey2", "pubkey3"],
+          "ids": [],
+          "authors": ["pubkey2"],
           "kinds": [0],
           "#e": ["e2", "e3"],
           "#p": ["pubkey5", "pubkey6"],
-          "since": 1642156800,
-          "until": 1642243200,
+          "since": 0,
+          "until": 1642243204564754650,
           "limit": 10
       }
       const reqData2 = {
-        "ids": ["id3", "id4"],
-        "authors": [],
+        "ids": [],
+        "authors": ["pubkey3"],
         "kinds": [1],
         "#e": ["e1", "e4"],
-        "#p": ["pubkey2", "pubkey5"],
-        "since": 1642156800,
-        "until": 1642243200,
+        "#p": [],
+        "since": 0,
+        "until": 1642243204564754650,
         "limit": 10
       }
       const reqDataKind0 = {
-        "ids": ["id3", "id4"],
+        "ids": [],
         "kinds": [0],
-        "#e": ["e1", "e4"],
-        "#p": ["pubkey2", "pubkey5"],
-        "since": 1642156800,
-        "until": 1642243200,
+        "#e": [],
+        "#p": [],
+        "since": 0,
+        "until": 1642243204564754650,
         "limit": 10
       }
 
@@ -91,7 +90,7 @@
       const eventMessage1_0 = JSON.stringify(["EVENT", eventData3]);
       const eventMessage2_0 = JSON.stringify(["EVENT", eventData4]);
       const reqMessage = JSON.stringify(["REQ", "sample_sub_id", reqData]);
-      const reqMessage2 = JSON.stringify(["REQ", "sample_sub_id2", reqData2]);
+      const reqMessage2 = JSON.stringify(["REQ", "sample_sub_id2", reqData2, reqData]);
       const reqMessage3 = JSON.stringify(["REQ", "sample_sub_id4", reqDataKind0]);
       const closeMessage = JSON.stringify(["CLOSE", "sample_sub_id"]);
       const closeMessage2 = JSON.stringify(["CLOSE", "sample_sub_id2"]);

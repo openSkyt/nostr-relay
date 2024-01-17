@@ -10,7 +10,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.util.*;
 
 /**
- * Web-socket handler, logs incoming messages and tracks active sessions, distributes message to NostrMessageHandler
+ * Web-socket handler, logs incoming messages and tracks active sessions, delegates messages to NostrMessageHandler.handleMessage();
  */
 @Component
 @RequiredArgsConstructor
@@ -41,6 +41,4 @@ public class NostrController extends TextWebSocketHandler {
         System.out.println("Message received: " + payload);
         messageHandler.handleMessage(session, payload);
     }
-
-
 }
