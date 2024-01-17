@@ -1,10 +1,11 @@
 package org.openskyt.nostrrelay.nostr;
 
-import lombok.RequiredArgsConstructor;
 import org.openskyt.nostrrelay.dto.CloseData;
 import org.openskyt.nostrrelay.dto.EventData;
 import org.openskyt.nostrrelay.dto.ReqData;
 import org.openskyt.nostrrelay.dto.Subscription;
+import org.openskyt.nostrrelay.model.NostrConsumer;
+import org.openskyt.nostrrelay.observers.CloseObserver;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -18,12 +19,20 @@ import java.util.Set;
  * Handles REQ and CLOSE data, manages subscriptions, sends subscription feed
  */
 @Component
-@RequiredArgsConstructor
-public class NostrSubscriptionHandler {
+//@RequiredArgsConstructor
+public class NostrSubscriptionHandler implements NostrConsumer {
 
     private final NostrUtil util = new NostrUtil();
     private final NostrPersistence persistence;
+    private final CloseObserver closeObserver;
     private final Map<Subscription, Set<ReqData>> subs = new HashMap<>();
+
+    public NostrSubscriptionHandler(NostrPersistence persistence, CloseObserver closeObserver) {
+        this.persistence = persistence;
+        this.closeObserver = closeObserver;
+
+        closeObserver.subscribe(this);
+    }
 
     /**
      * Handles REQ-message by adding a new subscription to subs then sends EVENT feed for a new subscription back.
@@ -43,10 +52,17 @@ public class NostrSubscriptionHandler {
      * @param closeData
      * parsed CLOSE-message data (present actual subscription)
      */
-    public void handleClose(CloseData closeData) {
+    public void handle(CloseData closeData) {
         if (subs.containsKey(closeData.subscription())) {
             subs.remove(closeData.subscription());
             System.out.println("subscription removed!");
+        }
+    }
+
+    @Override
+    public void handle(Object o) {
+        if (o instanceof CloseData) {
+            handle((CloseData) o);
         }
     }
 

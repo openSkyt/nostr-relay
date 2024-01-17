@@ -14,10 +14,10 @@ import java.util.*;
  */
 @Component
 @RequiredArgsConstructor
-public class NostrController extends TextWebSocketHandler {
+public class WSHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private final NostrMessageHandler messageHandler;
+    private final MessageHandler messageHandler;
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {

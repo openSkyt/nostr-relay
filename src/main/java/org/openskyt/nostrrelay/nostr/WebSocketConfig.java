@@ -12,11 +12,11 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final NostrMessageHandler messageHandler;
+    private final MessageHandler messageHandler;
 
     @Bean
-    public NostrController nostrProtocol() {
-        return new NostrController(messageHandler);
+    public WSHandler nostrProtocol() {
+        return new WSHandler(messageHandler);
     }
 
     @Override
