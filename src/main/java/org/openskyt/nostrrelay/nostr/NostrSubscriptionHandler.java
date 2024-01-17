@@ -101,11 +101,8 @@ public class NostrSubscriptionHandler {
         reqDataSet.forEach(r -> {
             // combine all conditions
             if ((r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(eventData.getKind()))                  // kinds filter
-                    && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(eventData.getPubkey()))   // authors filter
-                    && (r.getIds() == null || r.getIds().isEmpty() || r.getIds().contains(eventData.getId()))                   // ids filter
-                    && (r.getSince() <= eventData.getCreated_at())                                                              // since filter
-                    && (r.getUntil() >= eventData.getCreated_at())) {                                                           // until
-
+                    && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(eventData.getPubkey()))) {  // authors filter
+                
                 eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
                 validEventData.add(eventData); // returning set solves NullPointerException if element is filtered out
             }
