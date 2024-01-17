@@ -6,6 +6,8 @@ import org.openskyt.nostrrelay.dto.CloseData;
 import org.openskyt.nostrrelay.dto.EventData;
 import org.openskyt.nostrrelay.dto.ReqData;
 import org.openskyt.nostrrelay.observers.CloseObserver;
+import org.openskyt.nostrrelay.observers.EventObserver;
+import org.openskyt.nostrrelay.observers.ReqObserver;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -13,17 +15,17 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * Generic message processing class. Deserializes message into valid NOSTR-compatible data with NostrDeserializer and delegates handling logic to NostrEventHandler and NostrSubscriptionHandler handleABCD methods
+ * Generic message processing class. Deserializes messages into valid NOSTR-compatible data with NostrDeserializer and delegates handling logic to appropriate observers
  */
 @Component
 @RequiredArgsConstructor
-public class MessageHandler {
+public class NostrMessageHandler {
 
-    private final NostrSubscriptionHandler subscriptionHandler;
-    private final NostrEventHandler eventHandler;
     private final NostrDeserializer deserializer;
     private final NostrUtil util;
     private final CloseObserver closeObserver;
+    private final ReqObserver reqObserver;
+    private final EventObserver eventObserver;
 
     /**
      * Handles incoming generic message by checking NOSTR compatible types and invoking appropriate handling logic.
@@ -36,19 +38,21 @@ public class MessageHandler {
         try {
             Object[] message = new ObjectMapper().readValue(messageJSON, Object[].class);
             switch (message[0].toString()) {
-                case "REQ"      : Set<ReqData> reqDataSet = deserializer.deserializeReqMessage(session, messageJSON);
-                    subscriptionHandler.handleReq(reqDataSet); // handling method
+                case "REQ"      :
+                    Set<ReqData> reqDataSet = deserializer.deserializeReqMessage(session, messageJSON);
+                    reqObserver.notifyConsumers(reqDataSet);
                     break;
-                case "CLOSE"    : CloseData closeData = deserializer.deserializeCloseMessage(session, messageJSON);
-                    //subscriptionHandler.handleClose(closeData); // handling method
+                case "CLOSE"    :
+                    CloseData closeData = deserializer.deserializeCloseMessage(session, messageJSON);
                     closeObserver.notifyConsumers(closeData);
                     break;
-                case "EVENT"    : EventData eventData = deserializer.deserializeEventMessage(session, messageJSON);
-                    eventHandler.handleEvent(eventData); // handling method
-                    subscriptionHandler.handleSubFeed(eventData); // after receiving event -> broadcast
+                case "EVENT"    :
+                    EventData eventData = deserializer.deserializeEventMessage(session, messageJSON);
+                    eventObserver.notifyConsumers(eventData);
                     break;
-                default         : session.sendMessage(util.noticeMessage("invalid NOSTR message"));
-                    System.out.println("Invalid nostr message!");
+                default         :
+                    session.sendMessage(util.noticeMessage("Invalid NOSTR message"));
+                    System.out.println("MessageHandler: Invalid nostr message!");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

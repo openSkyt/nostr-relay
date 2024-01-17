@@ -14,10 +14,10 @@ import java.util.*;
  */
 @Component
 @RequiredArgsConstructor
-public class WSHandler extends TextWebSocketHandler {
+public class NostrWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private final MessageHandler messageHandler;
+    private final NostrMessageHandler nostrMessageHandler;
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
@@ -39,6 +39,6 @@ public class WSHandler extends TextWebSocketHandler {
 
         String payload = message.getPayload();
         System.out.println("Message received: " + payload);
-        messageHandler.handleMessage(session, payload);
+        nostrMessageHandler.handleMessage(session, payload);
     }
 }

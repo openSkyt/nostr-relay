@@ -1,7 +1,8 @@
 package org.openskyt.nostrrelay.nostr;
 
-import lombok.RequiredArgsConstructor;
 import org.openskyt.nostrrelay.dto.EventData;
+import org.openskyt.nostrrelay.model.NostrConsumer;
+import org.openskyt.nostrrelay.observers.EventObserver;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -11,18 +12,28 @@ import java.util.Optional;
  * Handles EVENT-data processing logic
  */
 @Component
-@RequiredArgsConstructor
-public class NostrEventHandler {
+public class NostrEventHandler implements NostrConsumer {
 
+    private final EventObserver observer;
     private final NostrPersistence persistence;
     private final NostrUtil util;
+    private final NostrSubscriptionFeeder subscriptionFeeder;
+
+    public NostrEventHandler(EventObserver observer, NostrPersistence persistence, NostrUtil util, NostrSubscriptionFeeder subscriptionFeeder) {
+        this.observer = observer;
+        this.persistence = persistence;
+        this.util = util;
+        this.subscriptionFeeder = subscriptionFeeder;
+
+        observer.subscribe(this);
+    }
 
     /**
      * Handles EVENT by delegating EVENT-data to a proper logic-handling method defined by EVENT-kind
      * @param eventData
      * parsed EVENT-message data
      */
-    public void handleEvent(EventData eventData) {
+    private void handle(EventData eventData) {
         switch (eventData.getKind()) {
             case 0      : handleEvent_0(eventData); break;
             case 1      : handleEvent_1(eventData); break;
@@ -30,10 +41,10 @@ public class NostrEventHandler {
                 try {
                     eventData.getSubscription().session().sendMessage(util.noticeMessage("Unknown event kind"));
                 } catch (IOException e) {
-                    System.out.println("Unknown event kind!");
                     throw new RuntimeException(e);
                 }
         }
+        subscriptionFeeder.handleSubFeed(eventData); // handle event -> then broadcast :)
     }
 
     /**
@@ -70,8 +81,16 @@ public class NostrEventHandler {
         try {
             persistence.saveEvent(eventData);
             eventData.getSubscription().session().sendMessage(util.okMessage(eventData, true));
-        } catch (Exception e) {
-            System.err.println("Session closed");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    // overridden method from implemented NostrConsumer interface - invokes actual impl. defined in this class
+    @Override
+    public void handle(Object o) {
+        if (o instanceof EventData) {
+            handle((EventData) o);
         }
     }
 }

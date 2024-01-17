@@ -45,7 +45,7 @@ public class NostrPersistence {
     }
 
     public void dbLog(EventData eventData) {
-        System.out.println("Currently saved events: " + getEventCount());
+        System.out.println("db: Currently saved events: " + getEventCount());
         if (repo.findById(eventData.getId()).isPresent()) {
             System.out.println("db: last saved event: " + retrieveEvent(eventData.getId()).toString());
         }

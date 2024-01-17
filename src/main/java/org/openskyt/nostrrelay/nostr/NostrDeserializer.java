@@ -32,10 +32,11 @@ public class NostrDeserializer {
         try {
             Object[] messageData = mapper.readValue(messageJSON, Object[].class);
             if (messageData.length == 2) {
+                // calling sub method
                 return deserializeEvent(session, mapper.writeValueAsString(messageData[1]));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
         return null;
     }
@@ -55,6 +56,7 @@ public class NostrDeserializer {
             if (messageData.length > 2) {
                 Set<ReqData> reqDataSet = new HashSet<>();
                 for (int i = 2; i < messageData.length; i++) {
+                    // calling sub method
                     reqDataSet.add(deserializeReq(
                             mapper.writeValueAsString(
                                     messageData[i]),
@@ -115,7 +117,7 @@ public class NostrDeserializer {
     /**
      * Sub method
      * @param reqJSON
-     * extracted REQ json
+     * incoming extracted REQ json
      * @param session
      * current ws session
      * @param subscriptionId
