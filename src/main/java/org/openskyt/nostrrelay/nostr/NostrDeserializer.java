@@ -116,7 +116,7 @@ public class NostrDeserializer {
                 return eventData;
             };
             try {
-                eventData.getSubscription().session().sendMessage(util.noticeMessage("invalid crypto data.."));
+                eventData.getSubscription().session().sendMessage(util.okMessage(eventData, false, "invalid crypto data"));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

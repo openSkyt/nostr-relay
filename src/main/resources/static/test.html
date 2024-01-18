@@ -45,14 +45,14 @@
                 "content": "cool content",
                 "sig": "xyz"
             };
-            appendMessage("sending kind 1 EVENT: ", "log");
+            appendMessage("sending INVALID kind 1 EVENT: ", "log");
             appendMessage(JSON.stringify(["EVENT", testEventData_kind1]), "log");
 
             socket.addEventListener('message', function onKind1Response(message) {
                 appendMessage("response to event kind1 received", "success");
                 appendMessage(message.data, "success");
-                if (message.data === '["OK","id4",true,""]') {
-                    appendMessage("response to kind 1 event OK", "success");
+                if (message.data === '["OK","id4",false,"invalid crypto data"]') {
+                    appendMessage("OK - event declined", "success");
                 } else {
                     appendMessage("response to kind 1 event FAIL", "fail");
                 }

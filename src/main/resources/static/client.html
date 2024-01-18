@@ -5,54 +5,223 @@
     <title>dummy</title>
     <script src="https://bitcoincore.tech/apps/bitcoinjs-ui/lib/bitcoinjs-lib.js"></script>
     <script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f2f2f2;
+            margin: 1.25rem;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .flex-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        button {
+            margin-right: 0.625rem;
+            cursor: pointer;
+            padding: 0.625rem;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 0.3125rem;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        label {
+            display: block;
+            margin: 0.625rem 0;
+            color: #555;
+        }
+
+        input {
+            padding: 0.625rem;
+            width: 100%;
+            box-sizing: border-box;
+            border: 0.0625rem solid #ccc;
+            border-radius: 0.3125rem;
+        }
+
+        #config, #kind0, #kind1 {
+            border: 0.0625rem solid #ccc;
+            padding: 1.25rem;
+            margin-bottom: 1.25rem;
+            border-radius: 0.625rem;
+        }
+
+        .separator {
+            border-right: 1px solid black;
+        }
+
+        table{
+            border-radius: 0.5rem;
+            background-color: #f5f5f5;
+            border-collapse: collapse;
+            overflow: hidden;
+        }
+
+        th, td, tr{
+            padding: 1rem;
+            text-align: start;
+        }
+
+        th{
+            font-size: 1.2rem;
+            color: white;
+            background-color: #007bff;
+            border-bottom: 1px solid black;
+        }
+
+        th a{
+            color: white;
+        }
+
+        tr:nth-child(even){
+            background-color:white;
+            overflow: hidden;
+            border-radius: 1rem;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
 
 <h1>Dummy client, very cool.</h1>
 <p>Important: Fields below need the keys in hex value. Results for now will appear in the console.</p>
+<div class="flex-container">
+    <button onclick="generateKeypair()">Generate keypair</button>
+    <label> Select a kind you want to send:
+        <select onchange="setKind()" id="selectKind">
+            <option>0</option>
+            <option>1</option>
+        </select>
+    </label>
+</div>
 
-<form>
+<div id="config">
     <label> Private key
-        <input oninput="checkInput()" id="privateKey" value="4148b0040c190b1058d5e478d5406a237ebae15b8d22184dc5660c17232ce011">
+        <input oninput="checkInput()" id="privateKey"
+               value="4148b0040c190b1058d5e478d5406a237ebae15b8d22184dc5660c17232ce011">
     </label>
     <label> Public key
-        <input oninput="checkInput()" id="publicKey" value="a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c">
+        <input oninput="checkInput()" id="publicKey"
+               value="a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c">
     </label>
     <label> Relay
-        <input oninput="checkInput()" id="relay" value="ws://localhost:8080">
+        <input oninput="checkInput()" id="relay" value="ws://localhost:8080/">
     </label>
+</div>
+
+
+<div id="kind0">
+    <label> Profile picture URL
+        <input id="pfpURL">
+    </label>
+    <label> About
+        <input id="about">
+    </label>
+    <label> Nickname
+        <input id="nickname">
+    </label>
+    <button type="button" onclick="getUserInfo()">Get user info</button>
+    <button type="button" onclick="sendMessage()">Send!</button>
+</div>
+
+<div id="kind1" hidden>
     <label> Message
         <input oninput="checkInput()" id="message">
     </label>
     <button type="button" id="sendButton" onclick="sendMessage()" disabled>Send!</button>
-</form>
+</div>
+
+<br>
 
 
-<p>
-    working credentials, copy & use as you please:<br>
-    private key: 4148b0040c190b1058d5e478d5406a237ebae15b8d22184dc5660c17232ce011<br>
-    public key: a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c<br>
-    relay: wss://relay.nostr.band/<br>
-    public key, but bech32: npub15g7vadw4t9hcpseynu27hne7gtr2hg9nez9274evqx9md3lxrqxqnps97z
-</p>
+<p>Working credentials, copy & use as you please:</p>
 
-<a href="https://flycat-web.vercel.app/user/a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c">
+<div class="table-container">
+    <table>
+        <tr>
+            <th class="separator">Property</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td class="separator">Private Key</td>
+            <td>4148b0040c190b1058d5e478d5406a237ebae15b8d22184dc5660c17232ce011</td>
+        </tr>
+        <tr>
+            <td class="separator">Public Key</td>
+            <td>a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c</td>
+        </tr>
+        <tr>
+            <td class="separator">Relay</td>
+            <td>wss://relay.nostr.band/</td>
+        </tr>
+        <tr>
+            <td class="separator">Public Key (bech32)</td>
+            <td>npub15g7vadw4t9hcpseynu27hne7gtr2hg9nez9274evqx9md3lxrqxqnps97z</td>
+        </tr>
+    </table>
+</div>
+
+
+<a href="https://flycat-web.vercel.app/user/npub15g7vadw4t9hcpseynu27hne7gtr2hg9nez9274evqx9md3lxrqxqnps97z">
     Link to a GUI where you can admire your extremely hard work</a>
+<br>
+<a href="https://nak.nostr.com/">
+    Link to the Nostr Army knife, where you can translate your nsec key into a basic hex key to use above.</a>
 
 <script>
+
+    function setKind() {
+        let kindSelection = document.getElementById("selectKind");
+        let formKind0 = document.getElementById("kind0");
+        let formKind1 = document.getElementById("kind1");
+
+        if (kindSelection.value === "0") {
+            formKind1.hidden = true;
+            formKind0.hidden = false;
+        }
+        if (kindSelection.value === "1") {
+            formKind1.hidden = false;
+            formKind0.hidden = true;
+        }
+    }
+
+
     function checkInput() {
         var privateKey = document.getElementById('privateKey').value;
         var publicKey = document.getElementById('publicKey').value;
         var relay = document.getElementById('relay').value;
         var message = document.getElementById('message').value;
-        var button = document.getElementById('sendButton');
-
-        if (privateKey && relay && message && publicKey) {
-            button.disabled = false;
-        } else {
-            button.disabled = true;
-        }
+        var sendButton = document.getElementById('sendButton');
+        sendButton.disabled = !(privateKey && relay && message && publicKey);
     }
+
+    function generateKeypair() {
+        let keypair = bitcoinjs.ECPair.makeRandom();
+        let privateKey = keypair.privateKey.toString("hex");
+        let publicKey = keypair.publicKey.toString("hex").substring(2);
+        document.getElementById("privateKey").value = privateKey;
+        document.getElementById("publicKey").value = publicKey;
+    }
+
 
     function sendMessage() {
         // Importing necessary modules
@@ -65,18 +234,19 @@
         var privKey = document.getElementById("privateKey").value;
         var pubKey = document.getElementById("publicKey").value;
         var relay = document.getElementById("relay").value;
+        var currentKind = document.getElementById("selectKind").value;
+
         var socket = new WebSocket(relay);
 
         // Handling incoming messages
         socket.addEventListener('message', async function (message) {
             // Parsing the incoming message
-            console.log(message.data)
+            //console.log(message.data)
             var [type, subId, event] = JSON.parse(message.data);
             var {kind, content} = event || {};
 
             // Logging the message and content
             console.log('message:', event);
-
             // Uncomment the following lines if decryption is required
             // if (kind === 4) {
             //    content = await decrypt(privKey, event.pubkey, content)
@@ -98,13 +268,40 @@
             socket.send(JSON.stringify(subscription));
 
             // Creating and sending a signed event
-            var event = {
-                "content": document.getElementById("message").value,
-                "created_at": Math.floor(Date.now() / 1000),
-                "kind": 1,
-                "tags": [],
-                "pubkey": pubKey,
-            };
+
+            if (currentKind === "1") {
+
+                var event = {
+                    "content": document.getElementById("message").value,
+                    "created_at": Math.floor(Date.now() / 1000),
+                    "kind": 1,
+                    "tags": [],
+                    "pubkey": pubKey,
+                };
+            }
+
+            if (currentKind === "0") {
+
+                let nickname = document.getElementById("nickname").value;
+                let about = document.getElementById("about").value;
+                let profilepicture = document.getElementById("pfpURL").value
+
+                let content = {
+                    "name": nickname,
+                    "about": about,
+                    "picture": profilepicture
+                }
+
+                var event = {
+                    "content": JSON.stringify(content),
+                    "display_name": nickname,
+                    "created_at": Math.floor(Date.now() / 1000),
+                    "kind": 0,
+                    "tags": [],
+                    "pubkey": pubKey,
+                };
+            }
+
             var signedEvent = await getSignedEvent(event, privKey);
             console.log('signedEvent:', signedEvent);
             socket.send(JSON.stringify(["EVENT", signedEvent]));
@@ -123,8 +320,49 @@
             event.id = sha256(eventData).toString('hex');
             event.sig = await schnorr.sign(event.id, privateKey);
             return event;
+
+
         }
     }
+
+    function getUserInfo() {
+        let pubKey = document.getElementById("publicKey").value;
+        let relay = document.getElementById("relay").value;
+        let socket = new WebSocket(relay);
+
+        let subId = bitcoinjs.ECPair.makeRandom().privateKey.toString("hex").substring(0, 16);
+        let filter = {"authors": [pubKey], "kinds": [0]};
+
+
+        socket.addEventListener('message', async function (message) {
+            // Parsing the incoming message
+            var [type, subId, event] = JSON.parse(message.data);
+            var {kind, content} = event || {};
+
+            // Logging the message and content
+            console.log('message:', event);
+
+            if (event !== undefined) {
+                let bigting = JSON.parse(JSON.stringify(event));
+                let content = JSON.parse(bigting.content)
+                document.getElementById("nickname").value = content.name;
+                document.getElementById("pfpURL").value = content.picture;
+                document.getElementById("about").value = content.about;
+            }
+        });
+
+        // Handling the WebSocket connection
+        socket.addEventListener('open', async function (e) {
+            console.log("connected to " + relay);
+
+            // Sending a subscription request
+            var subscription = ["REQ", subId, filter];
+            console.log('Subscription:', subscription);
+            socket.send(JSON.stringify(subscription));
+        });
+    }
+
+
 </script>
 
 </body>
