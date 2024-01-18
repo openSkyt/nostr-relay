@@ -9,7 +9,10 @@
             padding: 1rem;
         }
         body {
-            background-color: lightgray;
+            background-color: whitesmoke;
+        }
+        .plain {
+            background-color: whitesmoke;
         }
         .log {
             background-color: lightgray;
@@ -41,7 +44,6 @@
 
         socket.addEventListener('open', function () {
             appendMessage("WebSocket connection opened ", "success");
-            appendMessage("========================================================================================", "log");
 
             // invalid EVENT kind 1 log
             const testEventData_kind1 = {
@@ -53,7 +55,7 @@
                 "content": "cool content",
                 "sig": "xyz"
             };
-            appendMessage("sending INVALID kind 1 EVENT: ", "log");
+            appendMessage("sending INVALID kind 1 EVENT: ", "plain");
             appendMessage(JSON.stringify(["EVENT", testEventData_kind1]), "log");
 
             socket.addEventListener('message', function onKind1Response(message) {
@@ -65,7 +67,6 @@
                     appendMessage("response to invalid kind 1 event FAIL", "fail");
                 }
                 socket.removeEventListener('message', onKind1Response);
-                appendMessage("========================================================================================", "log");
                 initiateKind1Event();
             });
 
@@ -82,7 +83,7 @@
                 "content": "cool content",
                 "sig": "5a5c9919677045f364e5df4b6594dfbb57a62f52e8dd6e98d2ad5bb28a57710da1c7899e12a3156174ab4d2200421112c5b19841033430f06be62a9f524fa430"
             }
-            appendMessage("sending valid kind 1 EVENT: ", "log");
+            appendMessage("sending valid kind 1 EVENT: ", "plain");
             appendMessage(JSON.stringify(["EVENT", testEventData_kind1]), "log");
 
             socket.addEventListener('message', function onKind1Event1Response(message) {
@@ -95,7 +96,6 @@
                     appendMessage("response to valid kind 1 event FAIL", "fail");
                 }
                 socket.removeEventListener('message', onKind1Event1Response);
-                appendMessage("========================================================================================", "log");
                 initiateKind0Event1();
             });
 
@@ -103,22 +103,12 @@
         }
 
         function initiateKind0Event1() {
-            // EVENT kind 0 log 1
-            const testEventData_kind0_1 = {
-                "id": "e545e280efecac145cd90c3ca0bfceb4597a42e04999e6850846cb4da587f76c",
-                "pubkey": "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
-                "created_at": 1705580881,
-                "kind": 0,
-                "tags": [],
-                "content":"{\"name\":\"\",\"about\":\"\",\"picture\":\"\"}",
-                "sig": "aa6105db42724e28dad33a159c002f072e17c81bca9be6f5ccdb417182c76ef06d5e4dc503391d3bb31ae076cbfdd6245955a9e43510"
-            };
-            appendMessage("sending kind 0 EVENT: ", "log");
-            appendMessage(JSON.stringify(["EVENT", testEventData_kind0_1]), "log");
+            appendMessage("sending kind 0 EVENT: ", "plain");
+            appendMessage(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"personal info\",\"picture\":\"stringurl\"}","created_at":1705590491,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f","sig":"9e409ae4b14c96eaea7d0ebb713003439600953696d715564f9b948f64839900f540390dadd2dd881d75e6b93bd63cd1c88d523e3d234d3fb573b627a5137731"}]), "log");
 
             socket.addEventListener('message', function onKind0Event1Response(message) {
-                appendMessage("response to event kind0 received", "success");
-                if (JSON.parse(message.data)[0] === "OK" && JSON.parse(message.data)[1] === "e545e280efecac145cd90c3ca0bfceb4597a42e04999e6850846cb4da587f76c" && JSON.parse(message.data)[2] === true) {
+                appendMessage("response to event kind 0_1 received", "success");
+                if (JSON.parse(message.data)[0] === "OK" && JSON.parse(message.data)[1] === "3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f" && JSON.parse(message.data)[2] === true) {
                 appendMessage(message.data, "success");
                 appendMessage("OK - event kind 0_1 accepted", "success");
             } else {
@@ -126,42 +116,30 @@
                 appendMessage("FAIL - event kind 0_1 declined", "fail");
             }
                 socket.removeEventListener('message', onKind0Event1Response);
-                appendMessage("========================================================================================", "log");
                 initiateKind0Event2();
             });
 
-            socket.send(JSON.stringify(["EVENT", testEventData_kind0_1]));
+            socket.send(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"personal info\",\"picture\":\"stringurl\"}","created_at":1705590491,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f","sig":"9e409ae4b14c96eaea7d0ebb713003439600953696d715564f9b948f64839900f540390dadd2dd881d75e6b93bd63cd1c88d523e3d234d3fb573b627a5137731"}]));
         }
 
         function initiateKind0Event2() {
             // EVENT kind 0 log 2 (redundant data)
-            const testEventData_kind0_2 = {
-                "id": "a8f8102d0554fcd7b3eec53d8230496b4cb32f40a12c8f97b",
-                "pubkey": "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
-                "created_at": 1705580031,
-                "kind": 0,
-                "tags": [],
-                "content": "{\"name\":\"\",\"about\":\"\",\"picture\":\"\"}",
-                "sig": "dca209013610278a00b6a6cbad511ca3cde3177189e6ef1b3e1c9a2ac0c4ff0bd54e198f9bf12af3864c72fb6ae4598d6ce2327db76b7f0b49ff721fe903729c"
-            };
-            appendMessage("sending kind 0 EVENT: ", "log");
-            appendMessage(JSON.stringify(["EVENT", testEventData_kind0_2]), "log");
+            appendMessage("sending kind 0 EVENT: ", "plain");
+            appendMessage(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}","created_at":1705590741,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59","sig":"c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"}]), "log");
 
             socket.addEventListener('message', function onKind0Event2Response(message) {
-                appendMessage("response to event kind0 received", "success");
-                if (message.data === '["OK","id6",true,"metadata updated"]') {
+                appendMessage("response to event kind 0_2 received", "success");
+                if (message.data === '["OK","3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59",true,"metadata updated"]') {
                     appendMessage(message.data, "success");
-                    appendMessage("OK - event kind 0_1 accepted", "success");
+                    appendMessage("OK - event kind 0_2 accepted", "success");
                 } else {
-                    debugger
                     appendMessage(message.data, "fail");
                     appendMessage("FAIL - event 0_2 declined", "fail");
                 }
                 socket.removeEventListener('message', onKind0Event2Response);
-                appendMessage("========================================================================================", "log");
                 initiateReq();
             });
-            socket.send(JSON.stringify(["EVENT", testEventData_kind0_2]));
+            socket.send(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}","created_at":1705590741,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59","sig":"c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"}]));
         }
 
             // REQ log 1
@@ -170,7 +148,7 @@
                 "authors": ["pubkey4"],
                 "since": 0
             }
-            appendMessage("sending req(pubkey4) message: ", "log");
+            appendMessage("sending req(pubkey4) message: ", "plain");
             appendMessage(JSON.stringify(["REQ", "subId1", reqData]), "log");
 
             socket.addEventListener('message', function onReqPubKey1(message) {
@@ -180,22 +158,110 @@
                     appendMessage("OK - blank feed + eose", "success");
                 } else {
                     appendMessage(message.data, "fail");
-                    appendMessage("response to req(pubkey4) - FAIL", "fail");
+                    appendMessage("FAIL - no eose message", "fail");
                 }
                 socket.removeEventListener('message', onReqPubKey1);
                 initiateReq2();
             });
 
             socket.send(JSON.stringify(["REQ", "subId1", reqData]));
-
-
         }
 
         function initiateReq2() {
             const reqData2 = {
-                "kinds": 0
+                "authors": ["pubkey2"]
             }
+            appendMessage("sending req(pubkey2) message: ", "plain");
+            appendMessage(JSON.stringify(["REQ", "subId2", reqData2]), "log");
+
+            socket.addEventListener('message', function onReqPubKey2(message) {
+                appendMessage("response req(pubkey2) received", "success");
+                if (message.data === JSON.stringify(["EVENT","subId2",{"id":"id3","pubkey":"pubkey2","created_at":222222,"kind":1,"tags":[],"content":"content3","sig":"sig3"}])) {
+                    appendMessage(message.data, "success");
+                    appendMessage("OK - event id3 - pubkey2", "success");
+                } else {
+                    appendMessage(message.data, "fail");
+                    appendMessage("FAIL - failed to filter properly", "fail");
+                }
+                socket.removeEventListener('message', onReqPubKey2);
+                initiateReq2_b();
+            });
+
+            socket.send(JSON.stringify(["REQ", "subId2", reqData2]));
         }
+
+        function initiateReq2_b() {
+            socket.addEventListener('message', function onReqPubKey3(message) {
+                appendMessage("message2 - eose received", "success");
+                if (message.data === JSON.stringify(["EOSE","subId2"])) {
+                    appendMessage(message.data, "success");
+                    appendMessage("OK - eose response" , "success");
+                } else {
+                    appendMessage(message.data, "fail");
+                    appendMessage("FAIL - failed to eose", "fail");
+                }
+                socket.removeEventListener('message', onReqPubKey3);
+                initiateReq3();
+            });
+        }
+
+        function initiateReq3() {
+            const reqData3 = {
+                "kinds": [0]
+            }
+            appendMessage("sending req(kind0) message: ", "plain");
+            appendMessage(JSON.stringify(["REQ", "subId3", reqData3]), "log");
+
+            socket.addEventListener('message', function onReqPubKey3(message) {
+                appendMessage("response req(kind0) received", "success");
+                if (message.data === JSON.stringify(["EVENT","subId3",{"id":"3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59","pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","created_at":1705590741,"kind":0,"tags":[],"content":"{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}","sig":"c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"}])) {
+                    appendMessage(message.data, "success");
+                    appendMessage("OK - got own event 0", "success");
+                } else {
+                    appendMessage(message.data, "fail");
+                    appendMessage("FAIL - failed to filter properly", "fail");
+                }
+                socket.removeEventListener('message', onReqPubKey3);
+                initiateReq3_b();
+            });
+
+            socket.send(JSON.stringify(["REQ", "subId3", reqData3]));
+        }
+
+        function initiateReq3_b() {
+            socket.addEventListener('message', function onReqPubKey3_b(message) {
+                appendMessage("message2 - eose received:", "success");
+                if (message.data === JSON.stringify(["EOSE","subId3"])) {
+                    appendMessage(message.data, "success");
+                    appendMessage("OK - eose response" , "success");
+                } else {
+                    appendMessage(message.data, "fail");
+                    appendMessage("FAIL - failed to eose", "fail");
+                }
+                socket.removeEventListener('message', onReqPubKey3_b);
+                initiateClose();
+            });
+        }
+
+        function initiateClose() {
+            appendMessage("sending close(subId3) message: ", "plain");
+            appendMessage(JSON.stringify(["CLOSE", "subId3"]), "log");
+
+            socket.addEventListener('message', function onClose(message) {
+                appendMessage("response req(kind0) received", "success");
+                if (message.data === JSON.stringify(["NOTICE","subscription closed"])) {
+                    appendMessage(message.data, "success");
+                    appendMessage("OK - subscription closed", "success");
+                } else {
+                    appendMessage(message.data, "fail");
+                    appendMessage("FAIL", "fail");
+                }
+                socket.removeEventListener('message', onClose);
+            });
+
+            socket.send(JSON.stringify(["CLOSE", "subId3"]));
+        }
+
     </script>
 </ul>
 </body>

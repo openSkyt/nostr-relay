@@ -23,8 +23,8 @@ public class NostrRelayApplication implements CommandLineRunner {
 		repo.save(new Event("id1", "pubkey1", 111111, 1, new String[][]{}, "content1", "sig1"));
 		repo.save(new Event("id2", "pubkey1", 111111, 1, new String[][]{}, "content2", "sig2"));
 		repo.save(new Event("id3", "pubkey2", 222222, 1, new String[][]{}, "content3", "sig3"));
-		repo.save(new Event("xxxxx", "xxxxxx", 222222, -1, new String[][]{}, "xxxxxxxxxxx", "xxxx"));
-		repo.save(new Event("xxxxy", "xxxxxx", 222222, -1, new String[][]{}, "xxxxxxxxxxx", "xxxx"));
+		repo.save(new Event("xxxxx", "xxxxxx", 222222, 1, new String[][]{}, "xxxxxxxxxxx", "xxxx"));
+		repo.save(new Event("xxxxy", "xxxxxx", 222222, 1, new String[][]{}, "xxxxxxxxxxx", "xxxx"));
 		repo.save(new Event("xxxxy", "xxxxxx", 222222, 1, new String[][]{}, "xxxxxxxxxxx", "xxxx"));
 		repo.save(new Event("xxxxz", "xxxxxx", 222222, -1, new String[][]{}, "xxxxxxxxxxx", "xxxx"));
 	}
