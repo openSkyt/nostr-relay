@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test demo</title>
+    <style>
+        .log {
+            background-color: lightgray;
+        }
+        .success {
+            background-color: limegreen;
+        }
+        .fail {
+            background-color: tomato;
+        }
+    </style>
+</head>
+<body>
+<ul id="board">
+    <script>
+        const URI = "ws://localhost:8080/";
+        const socket = new WebSocket(URI);
+        let board = document.getElementById("board");
+
+        function appendMessage(message, statusClass) {
+            const p = document.createElement("p");
+            p.textContent = message;
+            p.className = statusClass;
+            board.appendChild(p);
+        }
+
+        // WS log
+        appendMessage(URI, "log");
+
+        socket.addEventListener('open', function () {
+            appendMessage("WebSocket connection opened ", "success");
+
+            // EVENT kind 1 log
+            const testEventData_kind1 = {
+                "id": "id4",
+                "pubkey": "pubkey3",
+                "created_at": 333333,
+                "kind": 1,
+                "tags": [],
+                "content": "cool content",
+                "sig": "xyz"
+            };
+            appendMessage("sending kind 1 EVENT: ", "log");
+            appendMessage(JSON.stringify(["EVENT", testEventData_kind1]), "log");
+
+            socket.addEventListener('message', function onKind1Response(message) {
+                appendMessage("response to event kind1 received", "success");
+                appendMessage(message.data, "success");
+                if (message.data === '["OK","id4",true,""]') {
+                    appendMessage("response to kind 1 event OK", "success");
+                } else {
+                    appendMessage("response to kind 1 event FAIL", "fail");
+                }
+                socket.removeEventListener('message', onKind1Response);
+                initiateKind0Event1();
+            });
+
+            socket.send(JSON.stringify(["EVENT", testEventData_kind1]));
+        });
+
+        function initiateKind0Event1() {
+            // EVENT kind 0 log 1
+            const testEventData_kind0_1 = {
+                "id": "id5",
+                "pubkey": "pubkey3",
+                "created_at": 333333,
+                "kind": 0,
+                "tags": [],
+                "content": "personal info",
+                "sig": "xyz"
+            };
+            appendMessage("sending kind 0 EVENT: ", "log");
+            appendMessage(JSON.stringify(["EVENT", testEventData_kind0_1]), "log");
+
+            socket.addEventListener('message', function onKind0Event1Response(message) {
+                appendMessage("response to event kind0 received", "success");
+                if (JSON.parse(message.data)[0] === "OK") {
+                appendMessage(message.data, "success");
+                appendMessage("response to kind 0 event OK", "success");
+            } else {
+                appendMessage(message.data, "fail");
+                appendMessage("response to kind 0 event FAIL", "fail");
+            }
+                socket.removeEventListener('message', onKind0Event1Response);
+                initiateKind0Event2();
+            });
+
+            socket.send(JSON.stringify(["EVENT", testEventData_kind0_1]));
+        }
+
+        function initiateKind0Event2() {
+            // EVENT kind 0 log 2 (redundant data)
+            const testEventData_kind0_2 = {
+                "id": "id6",
+                "pubkey": "pubkey3",
+                "created_at": 333333,
+                "kind": 0,
+                "tags": [],
+                "content": "updated personal info",
+                "sig": "xyz"
+            };
+            appendMessage("sending kind 0 EVENT: ", "log");
+            appendMessage(JSON.stringify(["EVENT", testEventData_kind0_2]), "log");
+
+            socket.addEventListener('message', function onKind0Event2Response(message) {
+                appendMessage("response to event kind0 received", "success");
+                if (message.data === '["OK","id6",true,"metadata updated"]') {
+                    appendMessage(message.data, "success");
+                    appendMessage("response to kind 0 event OK", "success");
+                } else {
+                    debugger
+                    appendMessage(message.data, "fail");
+                    appendMessage("response to kind 0 event FAIL", "fail");
+                }
+                socket.removeEventListener('message', onKind0Event2Response);
+                initiateReq();
+            });
+            socket.send(JSON.stringify(["EVENT", testEventData_kind0_2]));
+        }
+
+            // REQ log 1
+        function initiateReq() {
+            const reqData = {
+                "authors": ["pubkey4"],
+                "since": 0
+            }
+            appendMessage("sending req(pubkey4) message: ", "log");
+            appendMessage(JSON.stringify(["REQ", "subId1", reqData]), "log");
+
+            socket.addEventListener('message', function onReqPubKey1(message) {
+                appendMessage("response req(pubkey4) received", "success");
+                if (message.data === '["EOSE","subId1"]') {
+                    appendMessage(message.data, "success");
+                    appendMessage("response to req(pubkey4) - OK", "success");
+                } else {
+                    appendMessage(message.data, "fail");
+                    appendMessage("response to req(pubkey4) - FAIL", "fail");
+                }
+                socket.removeEventListener('message', onReqPubKey1);
+                initiateReq2();
+            });
+
+            socket.send(JSON.stringify(["REQ", "subId1", reqData]));
+
+
+        }
+
+        function initiateReq2() {
+            const reqData2 = {
+                "kinds": 0
+            }
+            appendMessage("req2 invoked", "log");
+        }
+    </script>
+</ul>
+</body>
+</html>

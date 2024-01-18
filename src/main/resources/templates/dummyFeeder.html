@@ -9,9 +9,9 @@
   <button id="sendEvent2" onclick="sendEvent2()">Send Event 2</button>
   <button id="sendKind0_1" onclick="sendKind0()">Send kind 0</button>
   <button id="sendKind0_2" onclick="sendKind0_2()">Send kind 0</button>
-  <button id="sendReq1" onclick="sendReq()">Req metadata</button>
-  <button id="sendReq2" onclick="sendReq2()">Req events</button>
-  <button id="sendReq3" onclick="sendReq3()">Send Req 3</button>
+  <button id="sendReq1" onclick="sendReq()">R pubkey 1</button>
+  <button id="sendReq2" onclick="sendReq2()">R pubkey 3 kind 1</button>
+  <button id="sendReq3" onclick="sendReq3()">R kind 0</button>
   <button id="sendReqKind0" onclick="reqKind0()">Send Req kind 0</button>
   <button id="sendClose" onclick="sendClose()">Send Close</button>
   <button id="sendClose2" onclick="sendClose2()">Send Close 2</button>
@@ -39,7 +39,7 @@
       };
       const eventData3 = {
         "id": "id12",
-        "pubkey": "pubkey4",
+        "pubkey": "pubkey1",
         "created_at": 6666666,
         "kind": 0,
         "tags": [],
@@ -48,7 +48,7 @@
       };
       const eventData4 = {
         "id": "id13",
-        "pubkey": "pubkey4",
+        "pubkey": "pubkey1",
         "created_at": 6666666,
         "kind": 0,
         "tags": [],
@@ -59,23 +59,11 @@
           "authors": ["pubkey1"]
       }
       const reqData2 = {
-        "ids": [],
         "authors": ["pubkey3"],
         "kinds": [1],
-        "#e": ["e1", "e4"],
-        "#p": [],
-        "since": 0,
-        "until": 1642243204564754650,
-        "limit": 10
       }
       const reqDataKind0 = {
-        "ids": [],
         "kinds": [0],
-        "#e": [],
-        "#p": [],
-        "since": 0,
-        "until": 1642243204564754650,
-        "limit": 10
       }
 
       const eventMessage = JSON.stringify(["EVENT", eventData]);

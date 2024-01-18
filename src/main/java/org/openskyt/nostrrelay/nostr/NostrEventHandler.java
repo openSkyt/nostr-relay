@@ -53,20 +53,22 @@ public class NostrEventHandler implements NostrConsumer {
      * incoming EVENT-data
      */
     private void handleEvent_0(EventData eventData) {
-        Optional<EventData> optEventData = persistence.findByPubkey(eventData.getPubkey());
-        // remove redundant data, send NOTICE message
+        Optional<EventData> optEventData = persistence.findByPubkeyAndByKind(eventData.getPubkey(), 0);
+        // remove redundant data, send OK message with additional payload
         if (optEventData.isPresent()) {
             persistence.delete(optEventData.get());
+            persistence.saveEvent(eventData);
             try {
-                eventData.getSubscription().session().sendMessage(util.noticeMessage("metadata updated"));
+                eventData.getSubscription().session().sendMessage(util.okMessage(eventData,true,"metadata updated"));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            return;
         }
         // save new data, send OK message
         persistence.saveEvent(eventData);
         try {
-            eventData.getSubscription().session().sendMessage(util.okMessage(eventData, true));
+            eventData.getSubscription().session().sendMessage(util.okMessage(eventData, true, ""));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -80,7 +82,7 @@ public class NostrEventHandler implements NostrConsumer {
     private void handleEvent_1(EventData eventData) {
         try {
             persistence.saveEvent(eventData);
-            eventData.getSubscription().session().sendMessage(util.okMessage(eventData, true));
+            eventData.getSubscription().session().sendMessage(util.okMessage(eventData, true, ""));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

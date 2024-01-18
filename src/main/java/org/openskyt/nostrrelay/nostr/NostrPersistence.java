@@ -7,7 +7,6 @@ import org.openskyt.nostrrelay.model.EventRepo;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -53,5 +52,9 @@ public class NostrPersistence {
 
     public long getEventCount() {
         return repo.count();
+    }
+
+    public Optional<EventData> findByPubkeyAndByKind(String pubkey, int kind) {
+        return repo.findByPubkeyAndByKind(pubkey, kind).map(EventData::new);
     }
 }

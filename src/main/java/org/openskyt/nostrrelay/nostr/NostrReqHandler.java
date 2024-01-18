@@ -32,7 +32,6 @@ public class NostrReqHandler implements NostrConsumer {
      * parsed REQ-Message data SET
      */
     private void handle(Set<ReqData> reqDataSet) { // single REQ message may contain multiple ReqData (filter)
-        System.out.println("NostrReqHandler.handle(Set<ReqData>) - actual impl. invoked");
         Subscription subscription = reqDataSet.iterator().next().getSubscription();
         subscriptionDataManager.addSubscription(subscription, reqDataSet);
         subscriptionFeeder.handleNewSubFeed(reqDataSet);

@@ -21,8 +21,8 @@ public class NostrUtil {
      * @return
      * TextMessage to be sent by WebSocketSession
      */
-    public TextMessage okMessage(EventData eventData, boolean wasEventSaved) {
-        return new TextMessage("[\"OK\",\"" + eventData.getId() + "\"," + wasEventSaved + ",\"\"]");
+    public TextMessage okMessage(EventData eventData, boolean wasEventSaved, String message) {
+        return new TextMessage("[\"OK\",\"" + eventData.getId() + "\"," + wasEventSaved + ",\"" + message + "\"]");
     }
 
     /**
