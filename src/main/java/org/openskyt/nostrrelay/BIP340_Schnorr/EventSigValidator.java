@@ -1,8 +1,6 @@
 package org.openskyt.nostrrelay.BIP340_Schnorr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.openskyt.nostrrelay.BIP340_Schnorr.Point;
-import org.openskyt.nostrrelay.BIP340_Schnorr.Util;
 import org.openskyt.nostrrelay.dto.EventData;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 @Component
+
 public class EventSigValidator {
 
 
