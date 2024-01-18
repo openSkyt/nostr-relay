@@ -13,6 +13,7 @@
         }
         .plain {
             background-color: whitesmoke;
+            font-weight: bold;
         }
         .log {
             background-color: lightgray;
@@ -40,31 +41,32 @@
         }
 
         // WS log
-        appendMessage(URI, "log");
+        appendMessage("Websocket test: " + URI, "log");
 
         socket.addEventListener('open', function () {
             appendMessage("WebSocket connection opened ", "success");
 
-            // invalid EVENT kind 1 log
+            // SIGNATURE VERIFIER : invalid EVENT kind 1 log
             const testEventData_kind1 = {
                 "id": "id4",
                 "pubkey": "pubkey3",
                 "created_at": 333333,
                 "kind": 1,
                 "tags": [],
-                "content": "cool content",
+                "content": "not so cool content",
                 "sig": "xyz"
             };
-            appendMessage("sending INVALID kind 1 EVENT: ", "plain");
+            appendMessage("signature verifier negative test: sending INVALID kind 1 EVENT: ", "plain");
             appendMessage(JSON.stringify(["EVENT", testEventData_kind1]), "log");
 
             socket.addEventListener('message', function onKind1Response(message) {
                 appendMessage("response to event kind1 received", "success");
-                appendMessage(message.data, "success");
                 if (message.data === '["OK","id4",false,"invalid crypto data"]') {
+                    appendMessage(message.data, "success");
                     appendMessage("OK - event declined", "success");
                 } else {
-                    appendMessage("response to invalid kind 1 event FAIL", "fail");
+                    appendMessage(message.data, "fail");
+                    appendMessage("response to invalid sig kind 1 event FAIL", "fail");
                 }
                 socket.removeEventListener('message', onKind1Response);
                 initiateKind1Event();
@@ -83,7 +85,7 @@
                 "content": "cool content",
                 "sig": "5a5c9919677045f364e5df4b6594dfbb57a62f52e8dd6e98d2ad5bb28a57710da1c7899e12a3156174ab4d2200421112c5b19841033430f06be62a9f524fa430"
             }
-            appendMessage("sending valid kind 1 EVENT: ", "plain");
+            appendMessage("signature verifier positive test sending valid kind 1 EVENT: ", "plain");
             appendMessage(JSON.stringify(["EVENT", testEventData_kind1]), "log");
 
             socket.addEventListener('message', function onKind1Event1Response(message) {
@@ -124,7 +126,7 @@
 
         function initiateKind0Event2() {
             // EVENT kind 0 log 2 (redundant data)
-            appendMessage("sending kind 0 EVENT: ", "plain");
+            appendMessage("sending second kind 0 EVENT: ", "plain");
             appendMessage(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}","created_at":1705590741,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59","sig":"c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"}]), "log");
 
             socket.addEventListener('message', function onKind0Event2Response(message) {
@@ -239,6 +241,57 @@
                     appendMessage("FAIL - failed to eose", "fail");
                 }
                 socket.removeEventListener('message', onReqPubKey3_b);
+                initiateKind0Event3();
+
+            });
+        }
+
+        function initiateKind0Event3() {
+            appendMessage("sending kind 0 EVENT: ", "plain");
+            appendMessage(JSON.stringify(["EVENT", {
+                "content": "{\"name\":\"PavelSlimBilek\",\"about\":\"about me\",\"picture\":\"myupdatedpicture\"}",
+                "created_at": 1705612806,
+                "kind": 0,
+                "tags": [],
+                "pubkey": "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
+                "id": "dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0",
+                "sig": "5daf34402b4b1caf79dbf9e84a53b833a72ca6501eb81107e4ee51f4bed8fc6ad9841202c70d809d0ea204f0218660d5a5a1753b8a5eff5174e85735df0ff95b"
+            }]), "log");
+
+            socket.addEventListener('message', function onKind0Event3Response(message) {
+                appendMessage("response to event kind 0_1 received", "success");
+                if (JSON.parse(message.data)[0] === "OK" && JSON.parse(message.data)[1] === "dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0" && JSON.parse(message.data)[2] === true) {
+                    appendMessage(message.data, "success");
+                    appendMessage("OK - event kind 0_3 accepted", "success");
+                } else {
+                    appendMessage(message.data, "fail");
+                    appendMessage("FAIL - event kind 0_1 declined", "fail");
+                }
+                socket.removeEventListener('message', onKind0Event3Response);
+                initiateKind0Event3b();
+            });
+
+            socket.send(JSON.stringify(["EVENT", {
+                "content": "{\"name\":\"PavelSlimBilek\",\"about\":\"about me\",\"picture\":\"myupdatedpicture\"}",
+                "created_at": 1705612806,
+                "kind": 0,
+                "tags": [],
+                "pubkey": "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
+                "id": "dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0",
+                "sig": "5daf34402b4b1caf79dbf9e84a53b833a72ca6501eb81107e4ee51f4bed8fc6ad9841202c70d809d0ea204f0218660d5a5a1753b8a5eff5174e85735df0ff95b"
+            }]));
+        }
+
+        function initiateKind0Event3b() {
+            socket.addEventListener('message', function onEventKind0_3b(message) {
+                if (message.data === JSON.stringify(["EVENT","subId3",{"id":"dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0","pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","created_at":1705612806,"kind":0,"tags":[],"content":"{\"name\":\"PavelSlimBilek\",\"about\":\"about me\",\"picture\":\"myupdatedpicture\"}","sig":"5daf34402b4b1caf79dbf9e84a53b833a72ca6501eb81107e4ee51f4bed8fc6ad9841202c70d809d0ea204f0218660d5a5a1753b8a5eff5174e85735df0ff95b"}])) {                    appendMessage(message.data, "success");
+                    appendMessage(message.data, "success");
+                    appendMessage("OK - event response" , "success");
+                } else {
+                    appendMessage(message.data, "fail");
+                    appendMessage("FAIL", "fail");
+                }
+                socket.removeEventListener('message', onEventKind0_3b);
                 initiateClose();
             });
         }
@@ -261,7 +314,6 @@
 
             socket.send(JSON.stringify(["CLOSE", "subId3"]));
         }
-
     </script>
 </ul>
 </body>
