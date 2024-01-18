@@ -3,10 +3,12 @@ package org.openskyt.nostrrelay.nostr;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import org.openskyt.nostrrelay.BIP340_Schnorr.EventSigValidator;
 import org.openskyt.nostrrelay.dto.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -18,6 +20,8 @@ import java.util.Set;
 public class NostrDeserializer {
 
     private final ObjectMapper mapper = new ObjectMapper();
+    private final EventSigValidator validator = new EventSigValidator();
+    private final NostrUtil util = new NostrUtil();
 
     /**
      * Deserializes incoming EVENT-message into EVENT-data object, adds session info. (uses sub method deserializeEvent())
@@ -108,7 +112,15 @@ public class NostrDeserializer {
         try {
             EventData eventData = mapper.readValue(eventJSON, EventData.class);
             eventData.setSubscription(new Subscription(null, session));
-            return eventData;
+            if (validator.verifyEvent(eventData)) {
+                return eventData;
+            };
+            try {
+                eventData.getSubscription().session().sendMessage(util.noticeMessage("invalid crypto data.."));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

@@ -1,4 +1,4 @@
-package org.openskyt.nostrrelay.nostr;
+package org.openskyt.nostrrelay.BIP340_Schnorr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.openskyt.nostrrelay.BIP340_Schnorr.Point;
@@ -17,7 +17,7 @@ import java.util.Collections;
 public class EventSigValidator {
 
 
-    public void verifyEvent(EventData eventData) {
+    public boolean verifyEvent(EventData eventData) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             ObjectMapper objectMapper = new ObjectMapper();
@@ -39,13 +39,16 @@ public class EventSigValidator {
                             Util.hexToBytes(eventData.getPubkey()),
                             Util.hexToBytes(eventData.getSig()))) { //todo add logic what to do here
                 System.out.println("id + hash is valid and signature is valid");
+                return true;
             } else {
                 System.out.println("hash is not match or signature is not valid");
+                return false;
             }
 
         } catch (Exception e) {
             System.out.println("cant verify event");
         }
+        return false;
     }
 
     //https://code.samourai.io/samouraidev/BIP340_Schnorr

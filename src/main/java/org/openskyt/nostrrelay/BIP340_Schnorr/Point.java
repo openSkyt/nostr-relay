@@ -2,7 +2,6 @@ package org.openskyt.nostrrelay.BIP340_Schnorr;
 
 import org.junit.Assert;
 
-
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
