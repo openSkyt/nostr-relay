@@ -6,7 +6,7 @@ import org.openskyt.nostrrelay.observers.EventObserver;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.List;
+import java.util.Optional;
 
 /**
  * Handles EVENT-data processing logic
@@ -53,11 +53,12 @@ public class NostrEventHandler implements NostrConsumer {
      * incoming EVENT-data
      */
     private void handleEvent_0(EventData eventData) {
-        List<EventData> optEventData = persistence.findByPubkeyAndByKind(eventData.getPubkey(), 0);
+        Optional<EventData> optEventData = persistence.retrieveMetaData(eventData.getPubkey());
         // remove redundant data, send OK message with additional payload
-        if (optEventData.contains(eventData)) {
-            persistence.delete(optEventData.get(0));
-            persistence.saveEvent(eventData);
+        if (optEventData.isPresent()) {
+            System.out.println("delete called");
+            persistence.delete(optEventData.get());
+            persistence.save(eventData);
             try {
                 eventData.getSubscription().session().sendMessage(util.okMessage(eventData,true,"metadata updated"));
             } catch (IOException e) {
@@ -66,7 +67,7 @@ public class NostrEventHandler implements NostrConsumer {
             return;
         }
         // save new data, send OK message
-        persistence.saveEvent(eventData);
+        persistence.save(eventData);
         try {
             eventData.getSubscription().session().sendMessage(util.okMessage(eventData, true, ""));
         } catch (IOException e) {
@@ -81,7 +82,7 @@ public class NostrEventHandler implements NostrConsumer {
      */
     private void handleEvent_1(EventData eventData) {
         try {
-            persistence.saveEvent(eventData);
+            persistence.save(eventData);
             eventData.getSubscription().session().sendMessage(util.okMessage(eventData, true, ""));
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -21,6 +21,9 @@
         .success {
             background-color: limegreen;
         }
+        .warning {
+            background-color: orange;
+        }
         .fail {
             background-color: tomato;
         }
@@ -41,13 +44,15 @@
         }
 
         // WS log
-        appendMessage("Websocket test: " + URI, "log");
+        appendMessage("T0-1L| Websocket test: " + URI, "log");
 
         socket.addEventListener('open', function () {
-            appendMessage("WebSocket connection opened ", "success");
+            appendMessage("T0-1 | WebSocket connection opened ", "success");
 
-            // SIGNATURE VERIFIER : invalid EVENT kind 1 log
-            const testEventData_kind1 = {
+            // T1-1
+            // SIGNATURE VERIFIER : invalid EVENT kind 1 signature
+            // await event being declined - responds with ["OK",id4,false,"invalid crypto data"]
+            const eventKind1_inv = {
                 "id": "id4",
                 "pubkey": "pubkey3",
                 "created_at": 333333,
@@ -56,27 +61,33 @@
                 "content": "not so cool content",
                 "sig": "xyz"
             };
-            appendMessage("signature verifier negative test: sending INVALID kind 1 EVENT: ", "plain");
-            appendMessage(JSON.stringify(["EVENT", testEventData_kind1]), "log");
+            // T1-1 | send invalid event data to (Deserializer -> Verifier) to filter out (proves validator's authenticity)
+            appendMessage("T1-1 | Sending INVALID kind 1 EVENT - signature verifier negative test:", "plain");
+            appendMessage("T1-1L| " + JSON.stringify(["EVENT", eventKind1_inv]), "log");
 
+            // T1-1a
             socket.addEventListener('message', function onKind1Response(message) {
-                appendMessage("response to event kind1 received", "success");
-                if (message.data === '["OK","id4",false,"invalid crypto data"]') {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - event declined", "success");
+                appendMessage("T1-1a | Message from relay received:", "success");
+
+                // T1-1b
+                if (message.data === JSON.stringify(["OK","id4",false,"invalid crypto data"])) {
+                    appendMessage("T1-1b | " + message.data, "success");
+                    appendMessage("T1-1b | OK - event declined", "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("response to invalid sig kind 1 event FAIL", "fail");
+                    appendMessage("T1-1b | " + message.data, "fail");
+                    appendMessage("T1-1b | FAIL - event accepted?", "fail");
                 }
                 socket.removeEventListener('message', onKind1Response);
-                initiateKind1Event();
+                instantiateValidKind1();
             });
-
-            socket.send(JSON.stringify(["EVENT", testEventData_kind1]));
+            socket.send(JSON.stringify(["EVENT", eventKind1_inv]));
         });
 
-        function initiateKind1Event() {
-            const testEventData_kind1 = {
+        // T1-2
+        // SIGNATURE VERIFIER : valid EVENT kind 1 signature
+        // await event being passed and saved to db - responds with ["OK",<eventId>,true,""]
+        function instantiateValidKind1() {
+            const eventKind1_val = {
                 "id": "512840ec2698eef9bfb62de589baae54005c7a5a1d7c1e106d986cc08a07696b",
                 "pubkey" : "9197fca00c8173db07bdd5a96b10d3b8d401a747cf26505066b7d5b73538c7a1",
                 "created_at": 1705574338,
@@ -84,83 +95,126 @@
                 "tags": [],
                 "content": "cool content",
                 "sig": "5a5c9919677045f364e5df4b6594dfbb57a62f52e8dd6e98d2ad5bb28a57710da1c7899e12a3156174ab4d2200421112c5b19841033430f06be62a9f524fa430"
-            }
-            appendMessage("signature verifier positive test sending valid kind 1 EVENT: ", "plain");
-            appendMessage(JSON.stringify(["EVENT", testEventData_kind1]), "log");
+            };
+            // T1-2 | send valid event data to (Deserializer -> SignatureVerifier) to filter out (proves validator's authenticity, proves kind 1 being saved)
+            appendMessage("T1-2L| Sending VALID kind 1 EVENT - signature verifier positive test: ", "plain");
+            appendMessage("T1-2L| " + JSON.stringify(["EVENT", eventKind1_val]), "log");
 
+            // T1-2a
             socket.addEventListener('message', function onKind1Event1Response(message) {
-                appendMessage("response to event kind1 received", "success");
+                appendMessage("T1-2a | Message from relay received: ", "success");
+
+                //T1-2b
                 if (message.data === '["OK","512840ec2698eef9bfb62de589baae54005c7a5a1d7c1e106d986cc08a07696b",true,""]') {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - event accepted", "success");
+                    appendMessage("T1-2b | " + message.data, "success");
+                    appendMessage("T1-2b | OK - event accepted, saved to db", "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("response to valid kind 1 event FAIL", "fail");
+                    appendMessage("T1-2b | " + message.data, "fail");
+                    appendMessage("T1-2b | FAIL - verification unsuccessful", "fail");
                 }
                 socket.removeEventListener('message', onKind1Event1Response);
-                initiateKind0Event1();
+                initiateKind0_1();
             });
-
-            socket.send(JSON.stringify(["EVENT", testEventData_kind1]));
+            socket.send(JSON.stringify(["EVENT", eventKind1_val]));
         }
 
-        function initiateKind0Event1() {
-            appendMessage("sending kind 0 EVENT: ", "plain");
-            appendMessage(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"personal info\",\"picture\":\"stringurl\"}","created_at":1705590491,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f","sig":"9e409ae4b14c96eaea7d0ebb713003439600953696d715564f9b948f64839900f540390dadd2dd881d75e6b93bd63cd1c88d523e3d234d3fb573b627a5137731"}]), "log");
-
-            socket.addEventListener('message', function onKind0Event1Response(message) {
-                appendMessage("response to event kind 0_1 received", "success");
-                if (JSON.parse(message.data)[0] === "OK" && JSON.parse(message.data)[1] === "3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f" && JSON.parse(message.data)[2] === true) {
-                appendMessage(message.data, "success");
-                appendMessage("OK - event kind 0_1 accepted", "success");
-            } else {
-                appendMessage(message.data, "fail");
-                appendMessage("FAIL - event kind 0_1 declined", "fail");
+        // T2-1 | send valid kind 0 event (proves kind 0 handling - saving)
+        // KIND 0 HANDLING : first entry
+        // await kind 0 event being saved into db - responds with ["OK",<eventId>,true,""]
+        function initiateKind0_1() {
+            const kind0_1 = {
+                "id": "3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f",
+                "pubkey": "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
+                "created_at": 1705590491,
+                "kind": 0,
+                "tags": [],
+                "content": "{\"name\":\"admin\",\"about\":\"personal info\",\"picture\":\"stringurl\"}",
+                "sig": "9e409ae4b14c96eaea7d0ebb713003439600953696d715564f9b948f64839900f540390dadd2dd881d75e6b93bd63cd1c88d523e3d234d3fb573b627a5137731"
             }
+            // T2-1 | send kind 0 EVENT (proves kind 0 was just saved for the first time)
+            appendMessage("T2-1L| Sending VALID kind 0 EVENT - kind 0 handling test 1 ", "plain");
+            appendMessage("T2-1L| " + JSON.stringify(["EVENT", kind0_1]), "log");
+
+            // T2-1a|
+            socket.addEventListener('message', function onKind0Event1Response(message) {
+                appendMessage("T2-1a| Message from relay received:", "success");
+
+                // T2-1b|
+                if (message.data === JSON.stringify(["OK","3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f",true,""])) {
+                    appendMessage("T2-1b| " + message.data, "success");
+                    appendMessage("T2-1b| OK - event accepted", "success");
+                }
+                else if (message.data === JSON.stringify(["OK","3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f",true,"metadata updated"])) {
+                    appendMessage("T2-1b| " + message.data, "warning");
+                    appendMessage("T2-1b| WARN - metadata overwritten?", "warning");
+                } else {
+                    appendMessage("T2-1b| " + message.data, "success");
+                    appendMessage("T2-1b| FAIL - bad response", "fail");
+                }
                 socket.removeEventListener('message', onKind0Event1Response);
                 initiateKind0Event2();
             });
 
-            socket.send(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"personal info\",\"picture\":\"stringurl\"}","created_at":1705590491,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f","sig":"9e409ae4b14c96eaea7d0ebb713003439600953696d715564f9b948f64839900f540390dadd2dd881d75e6b93bd63cd1c88d523e3d234d3fb573b627a5137731"}]));
+            socket.send(JSON.stringify(["EVENT", kind0_1]));
         }
 
+        // T2-2 | send valid kind 0 event
+        // KIND 0 HANDLING : second entry
+        // await kind 0 being saved into db rewriting the first record - responds with ["OK,<eventID>,true,"metadata updated"]
         function initiateKind0Event2() {
-            // EVENT kind 0 log 2 (redundant data)
-            appendMessage("sending second kind 0 EVENT: ", "plain");
-            appendMessage(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}","created_at":1705590741,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59","sig":"c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"}]), "log");
+            const kind0_2 = {
+                "id": "3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59",
+                "pubkey": "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
+                "created_at": 1705590741,
+                "kind": 0,
+                "tags": [],
+                "content": "{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}",
+                "sig": "c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"
+            }
+            // T2-2 | send kind O EVENT redundant metadata (proves kind 0 overwrites current data the second time)
+            appendMessage("T2-2L| Sending VALID kind 0 EVENT - kind 0 handling test 2: ", "plain");
+            appendMessage("T2-2L| " + JSON.stringify(["EVENT", kind0_2]), "log")
 
+            // T2-2a
             socket.addEventListener('message', function onKind0Event2Response(message) {
-                appendMessage("response to event kind 0_2 received", "success");
+                appendMessage("T2-2a| Message from relay received:", "success");
+
+                // T2-2b
                 if (message.data === '["OK","3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59",true,"metadata updated"]') {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - event kind 0_2 accepted", "success");
+                    appendMessage("T2-2b| " + message.data, "success");
+                    appendMessage("T2-2b| OK - metadata updated", "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL - event 0_2 declined", "fail");
+                    appendMessage("T2-2b| " + message.data, "fail");
+                    appendMessage("T2-2b| FAIL - bad response", "fail");
                 }
                 socket.removeEventListener('message', onKind0Event2Response);
                 initiateReq();
             });
-            socket.send(JSON.stringify(["EVENT",{"content":"{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}","created_at":1705590741,"kind":0,"tags":[],"pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","id":"3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59","sig":"c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"}]));
+            socket.send(JSON.stringify(["EVENT",kind0_2]));
         }
 
-            // REQ log 1
+        // T3-1
+        // SUBSCRIPTION HANDLING : first entry (pubkey4)
+        // await req being responded with empty feed with eose - responds with ["EOSE","subId1"]
         function initiateReq() {
             const reqData = {
-                "authors": ["pubkey4"],
-                "since": 0
+                "authors": ["pubkey4"], // pubkey4 has no events posted yet
             }
-            appendMessage("sending req(pubkey4) message: ", "plain");
-            appendMessage(JSON.stringify(["REQ", "subId1", reqData]), "log");
+            // T3-1 | send req for pubkey 4 (proves authors filter authenticity, proves subscription added)
+            appendMessage("T3-1L| Sending req(pubkey4) message: ", "plain");
+            appendMessage("T3-1L| " + JSON.stringify(["REQ", "subId1", reqData]), "log");
 
+            // T3-1a
             socket.addEventListener('message', function onReqPubKey1(message) {
-                appendMessage("response req(pubkey4) received", "success");
+                appendMessage("T3-1a| Message from relay received:", "success");
+
+                // T3-1b
                 if (message.data === '["EOSE","subId1"]') {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - blank feed + eose", "success");
+                    appendMessage("T3-1b| " + message.data, "success");
+                    appendMessage("T3-1b| OK - empty feed + eose", "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL - no eose message", "fail");
+                    appendMessage("T3-1b| " + message.data, "fail");
+                    appendMessage("T3-1b| FAIL - bad response", "fail");
                 }
                 socket.removeEventListener('message', onReqPubKey1);
                 initiateReq2();
@@ -169,59 +223,78 @@
             socket.send(JSON.stringify(["REQ", "subId1", reqData]));
         }
 
+        // T3-2
+        // SUBSCRIPTION HANDLING : second entry (pubkey2)
+        // await req being responded with one event message and eose (c, d) - responds with ["EVENT","subId2",{"id":"id3","pubkey":"pubkey2","created_at":222222,"kind":1,"tags":[],"content":"content3","sig":"sig3"}]
         function initiateReq2() {
             const reqData2 = {
                 "authors": ["pubkey2"]
             }
-            appendMessage("sending req(pubkey2) message: ", "plain");
-            appendMessage(JSON.stringify(["REQ", "subId2", reqData2]), "log");
+            // T3-2 | send req pubkey2 (proves authors filter authenticity, proves subscription added)
+            appendMessage("T3-2L| Sending req(pubkey2) message: ", "plain");
+            appendMessage("T3-2L| " + JSON.stringify(["REQ", "subId2", reqData2]), "log");
 
+            // T3-2a
             socket.addEventListener('message', function onReqPubKey2(message) {
-                appendMessage("response req(pubkey2) received", "success");
+                appendMessage("T3-2a | Message from relay received", "success");
+
+                // T3-2b
                 if (message.data === JSON.stringify(["EVENT","subId2",{"id":"id3","pubkey":"pubkey2","created_at":222222,"kind":1,"tags":[],"content":"content3","sig":"sig3"}])) {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - event id3 - pubkey2", "success");
+                    appendMessage("T3-2b| " + message.data, "success");
+                    appendMessage("T3-2b| OK - right event retrieved", "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL - failed to filter properly", "fail");
+                    appendMessage("T3-2b| " + message.data, "fail");
+                    appendMessage("T3-2b| FAIL - bad response", "fail");
                 }
                 socket.removeEventListener('message', onReqPubKey2);
+                // eose to be received in this function
                 initiateReq2_b();
             });
 
             socket.send(JSON.stringify(["REQ", "subId2", reqData2]));
         }
 
+        // T3-2c | T3-2d
         function initiateReq2_b() {
+            // T3-2c
             socket.addEventListener('message', function onReqPubKey3(message) {
-                appendMessage("message2 - eose received", "success");
+                appendMessage("T3-2c| Message from relay received: ", "success")
+
+                // T3-2d
                 if (message.data === JSON.stringify(["EOSE","subId2"])) {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - eose response" , "success");
+                    appendMessage("T3-2d| " + message.data, "success");
+                    appendMessage("T3-2d| OK - eose response" , "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL - failed to eose", "fail");
+                    appendMessage("T3-2d| " + message.data, "fail");
+                    appendMessage("T3-2d| FAIL - failed to eose", "fail");
                 }
                 socket.removeEventListener('message', onReqPubKey3);
                 initiateReq3();
             });
         }
 
+        // T3-3
+        // SUBSCRIPTION HANDLING : third entry (kind0)
+        // await req being responded with one event message and eose (c, d) responds with: ["EVENT","subId3",{"id":"3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59","pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","created_at":1705590741,"kind":0,"tags":[],"content":"{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}","sig":"c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"}]
         function initiateReq3() {
             const reqData3 = {
                 "kinds": [0]
             }
-            appendMessage("sending req(kind0) message: ", "plain");
-            appendMessage(JSON.stringify(["REQ", "subId3", reqData3]), "log");
+            // T3-3 | send req kind0 (proves kinds filter authenticity and subscription working)
+            appendMessage("T3-3L| Sending req(kind0) message: ", "plain");
+            appendMessage("T3-3L| " + JSON.stringify(["REQ", "subId3", reqData3]), "log");
 
+            // T3-3a
             socket.addEventListener('message', function onReqPubKey3(message) {
-                appendMessage("response req(kind0) received", "success");
+                appendMessage("T3-3a| Message from relay received", "success");
+
+                // T3-3b
                 if (message.data === JSON.stringify(["EVENT","subId3",{"id":"3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59","pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","created_at":1705590741,"kind":0,"tags":[],"content":"{\"name\":\"admin\",\"about\":\"updated personal info\",\"picture\":\"stringurl\"}","sig":"c6faae2a2e09c2a0d68ee1912118e2862def1bc891b96b800cca8595b989c898735dec55898b73bb0776e179aed26298bbf591db3db4554dc0dd4ccd094f72ed"}])) {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - got own event 0", "success");
+                    appendMessage("T3-3b| " + message.data, "success");
+                    appendMessage("T3-3b| OK - got only own event 0", "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL - failed to filter properly", "fail");
+                    appendMessage("T3-3b| " + message.data, "fail");
+                    appendMessage("T3-3b| FAIL - bad response", "fail");
                 }
                 socket.removeEventListener('message', onReqPubKey3);
                 initiateReq3_b();
@@ -230,15 +303,18 @@
             socket.send(JSON.stringify(["REQ", "subId3", reqData3]));
         }
 
+        // T3-3c | T3-3d
         function initiateReq3_b() {
+            // T3-3c
             socket.addEventListener('message', function onReqPubKey3_b(message) {
-                appendMessage("message2 - eose received:", "success");
+                appendMessage("T3-3c| Message from relay received:", "success");
+                // T3-3d
                 if (message.data === JSON.stringify(["EOSE","subId3"])) {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - eose response" , "success");
+                    appendMessage("T3-3d| " + message.data, "success");
+                    appendMessage("T3-3d| OK - eose response" , "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL - failed to eose", "fail");
+                    appendMessage("T3-3d| " + message.data, "fail");
+                    appendMessage("T3-3d| FAIL - failed to eose", "fail");
                 }
                 socket.removeEventListener('message', onReqPubKey3_b);
                 initiateKind0Event3();
@@ -246,9 +322,11 @@
             });
         }
 
+        // T3-4
+        // SUBSCRIPTION HANDLING : fourth entry (kind0 sending)
+        // await req being responded with single event and eose - responds with ["OK","dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0",true,"metadata updated"]
         function initiateKind0Event3() {
-            appendMessage("sending kind 0 EVENT: ", "plain");
-            appendMessage(JSON.stringify(["EVENT", {
+            const kind0_3 = JSON.stringify(["EVENT", {
                 "content": "{\"name\":\"PavelSlimBilek\",\"about\":\"about me\",\"picture\":\"myupdatedpicture\"}",
                 "created_at": 1705612806,
                 "kind": 0,
@@ -256,58 +334,65 @@
                 "pubkey": "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
                 "id": "dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0",
                 "sig": "5daf34402b4b1caf79dbf9e84a53b833a72ca6501eb81107e4ee51f4bed8fc6ad9841202c70d809d0ea204f0218660d5a5a1753b8a5eff5174e85735df0ff95b"
-            }]), "log");
+            }]);
+            // T3-4 | send event kind0 (proves kind 0 handling)
+            appendMessage("T3-4L| Sending kind 0 EVENT 3: ", "plain");
+            appendMessage("T3-4L| " + kind0_3, "log");
 
+            // T3-4a
             socket.addEventListener('message', function onKind0Event3Response(message) {
-                appendMessage("response to event kind 0_1 received", "success");
+                appendMessage("T3-4a| Message from relay: ", "success");
                 if (JSON.parse(message.data)[0] === "OK" && JSON.parse(message.data)[1] === "dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0" && JSON.parse(message.data)[2] === true) {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - event kind 0_3 accepted", "success");
+                    appendMessage("T3-4b| " + message.data, "success");
+                    appendMessage("T3-4b| OK - metadata update", "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL - event kind 0_1 declined", "fail");
+                    appendMessage("T3-4b| " + message.data, "fail");
+                    appendMessage("T3-4B| FAIL - bad response", "fail");
                 }
                 socket.removeEventListener('message', onKind0Event3Response);
                 initiateKind0Event3b();
             });
 
-            socket.send(JSON.stringify(["EVENT", {
-                "content": "{\"name\":\"PavelSlimBilek\",\"about\":\"about me\",\"picture\":\"myupdatedpicture\"}",
-                "created_at": 1705612806,
-                "kind": 0,
-                "tags": [],
-                "pubkey": "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
-                "id": "dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0",
-                "sig": "5daf34402b4b1caf79dbf9e84a53b833a72ca6501eb81107e4ee51f4bed8fc6ad9841202c70d809d0ea204f0218660d5a5a1753b8a5eff5174e85735df0ff95b"
-            }]));
+            socket.send(kind0_3);
         }
 
+        // T3-4c | T3-4d
         function initiateKind0Event3b() {
+            // T3-4c
             socket.addEventListener('message', function onEventKind0_3b(message) {
-                if (message.data === JSON.stringify(["EVENT","subId3",{"id":"dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0","pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","created_at":1705612806,"kind":0,"tags":[],"content":"{\"name\":\"PavelSlimBilek\",\"about\":\"about me\",\"picture\":\"myupdatedpicture\"}","sig":"5daf34402b4b1caf79dbf9e84a53b833a72ca6501eb81107e4ee51f4bed8fc6ad9841202c70d809d0ea204f0218660d5a5a1753b8a5eff5174e85735df0ff95b"}])) {                    appendMessage(message.data, "success");
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - event response" , "success");
+                appendMessage("T3-4c| Message from relay received:", "success");
+
+                // T3-4d
+                if (message.data === JSON.stringify(["EVENT","subId3",{"id":"dda5d1052eef2b2ba4d9580545097d7aa19d8d0bd5fa7a79ace0b80b2c72d7e0","pubkey":"a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c","created_at":1705612806,"kind":0,"tags":[],"content":"{\"name\":\"PavelSlimBilek\",\"about\":\"about me\",\"picture\":\"myupdatedpicture\"}","sig":"5daf34402b4b1caf79dbf9e84a53b833a72ca6501eb81107e4ee51f4bed8fc6ad9841202c70d809d0ea204f0218660d5a5a1753b8a5eff5174e85735df0ff95b"}])) {
+                    appendMessage("T3-4d| " + message.data, "success");
+                    appendMessage("T3-4d| OK - response ok (subscribed successfully)" , "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL", "fail");
+                    appendMessage("T3-4d| " + message.data, "fail");
+                    appendMessage("T3-4d| FAIL", "fail");
                 }
                 socket.removeEventListener('message', onEventKind0_3b);
                 initiateClose();
             });
         }
 
+        // T4-1
+        // CLOSE HANDLING
+        // await req subId3 being closed
         function initiateClose() {
-            appendMessage("sending close(subId3) message: ", "plain");
-            appendMessage(JSON.stringify(["CLOSE", "subId3"]), "log");
+            appendMessage("T4-1L| sending close(subId3) message: ", "plain");
+            appendMessage("T4-1L| " + JSON.stringify(["CLOSE", "subId3"]), "log");
 
+            // T4-1a
             socket.addEventListener('message', function onClose(message) {
-                appendMessage("response req(kind0) received", "success");
+                appendMessage("T4-1a| Message from relay received:", "success");
+
+                // T4-1b
                 if (message.data === JSON.stringify(["NOTICE","subscription closed"])) {
-                    appendMessage(message.data, "success");
-                    appendMessage("OK - subscription closed", "success");
+                    appendMessage("T4-1b| " + message.data, "success");
+                    appendMessage("T4-1b| OK - subscription closed", "success");
                 } else {
-                    appendMessage(message.data, "fail");
-                    appendMessage("FAIL", "fail");
+                    appendMessage("T4-1b| " + message.data, "fail");
+                    appendMessage("T4-1b| FAIL - bad response", "fail");
                 }
                 socket.removeEventListener('message', onClose);
             });
