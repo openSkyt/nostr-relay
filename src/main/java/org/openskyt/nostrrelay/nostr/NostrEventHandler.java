@@ -6,7 +6,7 @@ import org.openskyt.nostrrelay.observers.EventObserver;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Optional;
+import java.util.List;
 
 /**
  * Handles EVENT-data processing logic
@@ -53,10 +53,10 @@ public class NostrEventHandler implements NostrConsumer {
      * incoming EVENT-data
      */
     private void handleEvent_0(EventData eventData) {
-        Optional<EventData> optEventData = persistence.findByPubkeyAndByKind(eventData.getPubkey(), 0);
+        List<EventData> optEventData = persistence.findByPubkeyAndByKind(eventData.getPubkey(), 0);
         // remove redundant data, send OK message with additional payload
-        if (optEventData.isPresent()) {
-            persistence.delete(optEventData.get());
+        if (optEventData.contains(eventData)) {
+            persistence.delete(optEventData.get(0));
             persistence.saveEvent(eventData);
             try {
                 eventData.getSubscription().session().sendMessage(util.okMessage(eventData,true,"metadata updated"));

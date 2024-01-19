@@ -4,9 +4,11 @@ import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.openskyt.nostrrelay.dto.EventData;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
 @NoArgsConstructor
+@Document
 public class Event {
 
     @Id
