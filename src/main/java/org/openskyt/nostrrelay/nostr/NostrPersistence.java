@@ -6,7 +6,6 @@ import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.model.EventRepo;
 import org.openskyt.nostrrelay.repository.EventRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,6 +1,5 @@
 package org.openskyt.nostrrelay.repository;
 
-import io.micrometer.observation.ObservationFilter;
 import org.openskyt.nostrrelay.model.Event;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
