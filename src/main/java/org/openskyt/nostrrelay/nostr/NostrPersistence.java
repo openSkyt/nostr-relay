@@ -54,15 +54,25 @@ public class NostrPersistence {
         return repo.count();
     }
 
+    /**
+     * Retrieves all valid EVENT-data as required by new subs reqDataSet
+     * @param reqDataSet
+     * ReqDataSet of a newly created subscription
+     * @return
+     * Set of valid EventData (to send to the client)
+     */
     public Set<EventData> getNewSubscriptionFeed(Set<ReqData> reqDataSet) {
         Set<EventData> validDataSet = new HashSet<>();
 
+        // find all matching events in the DB
         reqDataSet.forEach(request -> {
             Set<Event> events = repo.findAllMatchingData(
                     request.getAuthors() == null ? new HashSet<>() : request.getAuthors(),
-                    request.getKinds() == null ? new HashSet<>() : request.getKinds()
+                    request.getKinds() == null ? new HashSet<>() : request.getKinds(),
+                    request.getIds() == null ? new HashSet<>() : request.getIds()
             );
 
+            // convert to EventData dto and add subscription info
             Set<EventData> eventDataSet = events.stream()
                     .map(EventData::new)
                     .collect(Collectors.toSet());
@@ -70,7 +80,6 @@ public class NostrPersistence {
 
             validDataSet.addAll(eventDataSet);
         });
-
         return validDataSet;
     }
 }

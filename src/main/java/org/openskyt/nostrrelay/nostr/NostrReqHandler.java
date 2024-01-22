@@ -14,12 +14,10 @@ import java.util.Set;
 @Component
 public class NostrReqHandler implements NostrConsumer {
 
-    private final ReqObserver observer;
     private final NostrSubscriptionDataManager subscriptionDataManager;
     private final NostrSubscriptionFeeder subscriptionFeeder;
 
     public NostrReqHandler(ReqObserver observer, NostrSubscriptionDataManager subscriptionDataManager, NostrSubscriptionFeeder subscriptionFeeder) {
-        this.observer = observer;
         this.subscriptionDataManager = subscriptionDataManager;
         this.subscriptionFeeder = subscriptionFeeder;
 

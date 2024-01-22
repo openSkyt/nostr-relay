@@ -14,13 +14,11 @@ import java.util.Optional;
 @Component
 public class NostrEventHandler implements NostrConsumer {
 
-    private final EventObserver observer;
     private final NostrPersistence persistence;
     private final NostrUtil util;
     private final NostrSubscriptionFeeder subscriptionFeeder;
 
     public NostrEventHandler(EventObserver observer, NostrPersistence persistence, NostrUtil util, NostrSubscriptionFeeder subscriptionFeeder) {
-        this.observer = observer;
         this.persistence = persistence;
         this.util = util;
         this.subscriptionFeeder = subscriptionFeeder;

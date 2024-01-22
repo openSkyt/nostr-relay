@@ -6,13 +6,15 @@ import org.openskyt.nostrrelay.dto.EventData;
 import org.openskyt.nostrrelay.dto.ReqData;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.springframework.stereotype.Component;
-import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This class handles feeding clients with subscribed data
+ */
 @Component
 @RequiredArgsConstructor
 public class NostrSubscriptionFeeder {
@@ -73,7 +75,7 @@ public class NostrSubscriptionFeeder {
                     && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(eventData.getPubkey()))) {    // authors filter
 
                 eventData.setSubscription(reqDataSet.iterator().next().getSubscription());
-                validEventData.add(eventData); // returning set solves NullPointerException if element is filtered out
+                validEventData.add(eventData); // returning set solves NullPointerException in case element is filtered out
             }
         });
         return validEventData;
@@ -89,7 +91,7 @@ public class NostrSubscriptionFeeder {
             try {
                 eventData.getSubscription().session().sendMessage(util.eventMessage(eventData));
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException();
             }
         });
     }

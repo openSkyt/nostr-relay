@@ -2,7 +2,6 @@ package org.openskyt.nostrrelay;
 
 import lombok.AllArgsConstructor;
 import org.openskyt.nostrrelay.model.Event;
-import org.openskyt.nostrrelay.model.EventRepo;
 import org.openskyt.nostrrelay.repository.EventRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;

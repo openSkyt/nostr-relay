@@ -22,6 +22,7 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
+
         sessions.add(session);
         System.out.println("dev: New session opened. Current session size: " + sessions.size());
     }

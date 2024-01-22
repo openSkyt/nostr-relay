@@ -13,7 +13,6 @@ import java.io.IOException;
 @Component
 public class NostrCloseHandler implements NostrConsumer {
 
-    private final CloseObserver closeObserver;
     private final NostrSubscriptionDataManager subscriptionDataManager;
     private final NostrUtil util;
 
@@ -21,7 +20,6 @@ public class NostrCloseHandler implements NostrConsumer {
                              NostrSubscriptionDataManager subscriptionDataManager,
                              NostrUtil util) {
 
-        this.closeObserver = closeObserver;
         this.subscriptionDataManager = subscriptionDataManager;
         this.util = util;
 

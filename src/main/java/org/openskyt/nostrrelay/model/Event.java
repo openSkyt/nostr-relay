@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.openskyt.nostrrelay.dto.EventData;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 @Getter
 @NoArgsConstructor
@@ -14,7 +13,6 @@ public class Event {
 
     @Id
     private String id;
-    @Field ("pubkey")
     private String pubkey;
     private long created_at;
     private int kind;
