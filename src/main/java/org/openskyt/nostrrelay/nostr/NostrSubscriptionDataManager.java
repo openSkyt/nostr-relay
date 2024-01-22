@@ -36,4 +36,3 @@ public class NostrSubscriptionDataManager {
         return this.subscriptions;
     }
 }
-

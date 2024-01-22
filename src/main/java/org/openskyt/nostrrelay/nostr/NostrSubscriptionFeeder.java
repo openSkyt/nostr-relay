@@ -1,5 +1,6 @@
 package org.openskyt.nostrrelay.nostr;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.openskyt.nostrrelay.dto.EventData;
 import org.openskyt.nostrrelay.dto.ReqData;
@@ -25,17 +26,14 @@ public class NostrSubscriptionFeeder {
      * @param reqDataSet
      * incoming REQ-data SET
      */
+    @Transactional
     public void handleNewSubFeed(Set<ReqData> reqDataSet) {
         sendSubFeed(persistence.getNewSubscriptionFeed(reqDataSet));
-        try (WebSocketSession session = reqDataSet.iterator().next().getSubscription().session()) {
             try {
-                session.sendMessage(util.eoseMessage(reqDataSet));
+                reqDataSet.iterator().next().getSubscription().session().sendMessage(util.eoseMessage(reqDataSet));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -91,7 +89,7 @@ public class NostrSubscriptionFeeder {
             try {
                 eventData.getSubscription().session().sendMessage(util.eventMessage(eventData));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                e.printStackTrace();
             }
         });
     }

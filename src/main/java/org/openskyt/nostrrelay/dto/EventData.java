@@ -6,8 +6,8 @@ import org.openskyt.nostrrelay.model.Event;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class EventData {
 

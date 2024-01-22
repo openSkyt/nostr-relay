@@ -23,14 +23,15 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
         sessions.add(session);
-        System.out.println("New session opened. Current session size: " + sessions.size());
+        System.out.println("dev: New session opened. Current session size: " + sessions.size());
     }
 
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session,
-                                      CloseStatus status) throws Exception {
+                                      CloseStatus status) {
 
-        System.out.println("WebSocket session closed with reason: " + status.getReason());
+        sessions.remove(session);
+        System.out.println("dev: WebSocket session closed with reason: " + status.getReason());
     }
 
     @Override

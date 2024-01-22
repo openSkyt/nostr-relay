@@ -11,6 +11,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 @AllArgsConstructor
 public class NostrRelayApplication implements CommandLineRunner {
+
 	private EventRepository eventRepository;
 
 	public static void main(String[] args) {

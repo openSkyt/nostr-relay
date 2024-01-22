@@ -58,20 +58,19 @@ public class NostrPersistence {
         Set<EventData> validDataSet = new HashSet<>();
 
         reqDataSet.forEach(request -> {
-            Set<Event> events = repo.findAllMatchingReqData(
-                    request.getAuthors() == null ? new HashSet<>() : request.getAuthors()
+            Set<Event> events = repo.findAllMatchingData(
+                    request.getAuthors() == null ? new HashSet<>() : request.getAuthors(),
+                    request.getKinds() == null ? new HashSet<>() : request.getKinds()
             );
 
             Set<EventData> eventDataSet = events.stream()
                     .map(EventData::new)
-                    .collect(Collectors.toSet())
-                    .stream()
-                    .map(e -> EventData.builder().subscription(request.getSubscription()).build())
                     .collect(Collectors.toSet());
+            eventDataSet.forEach(e -> e.setSubscription(request.getSubscription()));
 
             validDataSet.addAll(eventDataSet);
         });
-        System.out.println(validDataSet.size());
+
         return validDataSet;
     }
 }

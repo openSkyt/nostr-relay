@@ -11,6 +11,11 @@ public interface EventRepository extends MongoRepository<Event, String> {
     @Query("{'pubkey': ?0, 'kind': ?1}")
     Set<Event> findByPubkeyAndByKind(String pubkey, int kind);
 
-    @Query("{'pubkey': { $in: ?0 }}")
-    Set<Event> findAllMatchingReqData(Set<String> authors);
+    @Query("{$or: ["
+            + "{ $or: [{ 'pubkey': { $exists: false } }, { 'pubkey': { $in: ?0 } }] }, "
+            + "{ $or: [{ 'kind': { $exists: false } }, { 'kind': { $in: ?1 } }] }"
+            + "]}")
+    Set<Event> findAllMatchingData(Set<String> authors, Set<Integer> kinds);
+
+
 }
