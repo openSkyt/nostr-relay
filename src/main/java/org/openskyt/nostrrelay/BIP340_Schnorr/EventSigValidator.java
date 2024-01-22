@@ -12,9 +12,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 @Component
-
 public class EventSigValidator {
-
 
     public boolean verifyEvent(EventData eventData) {
         try {
@@ -51,7 +49,7 @@ public class EventSigValidator {
     }
 
     //https://code.samourai.io/samouraidev/BIP340_Schnorr
-    public boolean verify(byte[] id, byte[] pubkey, byte[] sig) throws Exception {
+    private boolean verify(byte[] id, byte[] pubkey, byte[] sig) throws Exception {
         if (id.length != 32 || pubkey.length != 32 || sig.length != 64) {
             System.out.println("ID or pubkey or sig is not valid");
             return false;
@@ -63,7 +61,7 @@ public class EventSigValidator {
         }
         BigInteger r = Util.bigIntFromBytes(Arrays.copyOfRange(sig, 0, 32));
         BigInteger s = Util.bigIntFromBytes(Arrays.copyOfRange(sig, 32, 64));
-        if (r.compareTo(Point.getp()) >= 0 || s.compareTo(Point.getn()) >= 0) {
+        if (r.compareTo(Point.getP()) >= 0 || s.compareTo(Point.getN()) >= 0) {
             return false;
         }
         int len = 32 + pubkey.length + id.length;
@@ -71,9 +69,8 @@ public class EventSigValidator {
         System.arraycopy(sig, 0, buf, 0, 32);
         System.arraycopy(pubkey, 0, buf, 32, pubkey.length);
         System.arraycopy(id, 0, buf, 32 + pubkey.length, id.length);
-        BigInteger e = Util.bigIntFromBytes(Point.taggedHash("BIP0340/challenge", buf)).mod(Point.getn());
-        Point R = Point.add(Point.mul(Point.getG(), s), Point.mul(p, Point.getn().subtract(e)));
+        BigInteger e = Util.bigIntFromBytes(Point.taggedHash("BIP0340/challenge", buf)).mod(Point.getN());
+        Point R = Point.add(Point.mul(Point.getG(), s), Point.mul(p, Point.getN().subtract(e)));
         return R != null && R.hasEvenY() && R.getX().compareTo(r) == 0;
-
     }
 }

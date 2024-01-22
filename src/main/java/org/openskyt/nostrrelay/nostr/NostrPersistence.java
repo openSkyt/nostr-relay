@@ -2,12 +2,14 @@ package org.openskyt.nostrrelay.nostr;
 
 import lombok.RequiredArgsConstructor;
 import org.openskyt.nostrrelay.dto.EventData;
+import org.openskyt.nostrrelay.dto.ReqData;
 import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.repository.EventRepository;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -19,7 +21,6 @@ public class NostrPersistence {
 
     private final EventRepository repo;
 
-
     public void save(EventData eventData) {
         repo.save(new Event(eventData));
         dbLog(eventData);
@@ -30,24 +31,15 @@ public class NostrPersistence {
         return optEvent.map(EventData::new).orElse(null);
     }
 
-    public List<EventData> retrieveAllEvents() {
-        return repo.findAll().stream()
-                .map(EventData::new)
-                .collect(Collectors.toList());
-    }
-
     public void delete(EventData eventData) {
         try {
-            System.out.println("second delete called");
             repo.deleteById(eventData.getId());
-            System.out.println("after deletion");
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException();
         }
     }
 
     public Optional<EventData> retrieveMetaData(String pubkey) {
-        System.out.println("retrieving");
         return repo.findByPubkeyAndByKind(pubkey, 0).stream().findAny().map(EventData::new);
     }
 
@@ -60,5 +52,26 @@ public class NostrPersistence {
 
     public long getEventCount() {
         return repo.count();
+    }
+
+    public Set<EventData> getNewSubscriptionFeed(Set<ReqData> reqDataSet) {
+        Set<EventData> validDataSet = new HashSet<>();
+
+        reqDataSet.forEach(request -> {
+            Set<Event> events = repo.findAllMatchingReqData(
+                    request.getAuthors() == null ? new HashSet<>() : request.getAuthors()
+            );
+
+            Set<EventData> eventDataSet = events.stream()
+                    .map(EventData::new)
+                    .collect(Collectors.toSet())
+                    .stream()
+                    .map(e -> EventData.builder().subscription(request.getSubscription()).build())
+                    .collect(Collectors.toSet());
+
+            validDataSet.addAll(eventDataSet);
+        });
+        System.out.println(validDataSet.size());
+        return validDataSet;
     }
 }

@@ -1,41 +1,27 @@
 package org.openskyt.nostrrelay.BIP340_Schnorr;
 
-import org.junit.Assert;
+import lombok.Getter;
 
 import java.math.BigInteger;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+@Getter
 public class Point  {
 
-    final static private BigInteger p = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
-    final static private BigInteger n = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16);
-
-    final static private Point G = new Point(
+    @Getter
+    private static final BigInteger p = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F", 16);
+    @Getter
+    private static final BigInteger n = new BigInteger("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16);
+    @Getter
+    private static final Point G = new Point(
             new BigInteger("79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798", 16),
             new BigInteger("483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8", 16)
     );
 
-    private Pair<BigInteger,BigInteger> pair = null;
+    private final Pair<BigInteger,BigInteger> pair;
 
     public Point(BigInteger x , BigInteger y) {
         pair = Pair.of(x, y);
-    }
-
-    public Point(byte[] b0, byte[] b1) {
-        pair = Pair.of(new BigInteger(1, b0), new BigInteger(1, b1));
-    }
-
-    public static BigInteger getp() {
-        return p;
-    }
-
-    public static BigInteger getn() {
-        return n;
-    }
-
-    public static Point getG() {
-        return G;
     }
 
     public BigInteger getX() {
@@ -46,26 +32,8 @@ public class Point  {
         return pair.getRight();
     }
 
-    public static BigInteger getX(Point P) {
-        Assert.assertTrue(!P.isInfinite());
-        return P.getX();
-    }
-
-    public static BigInteger getY(Point P) {
-        Assert.assertTrue(!P.isInfinite());
-        return P.getY();
-    }
-
-    public Pair<BigInteger,BigInteger> getPair() {
-        return pair;
-    }
-
     public boolean isInfinite() {
         return pair == null || pair.getLeft() == null || pair.getRight() == null;
-    }
-
-    public static boolean isInfinite(Point P) {
-        return P.isInfinite();
     }
 
     public Point add(Point P) {
@@ -87,7 +55,7 @@ public class Point  {
             return infinityPoint();
         }
 
-        BigInteger lam = null;
+        BigInteger lam;
         if(P1.equals(P2)) {
             BigInteger base = P2.getY().multiply(BigInteger.TWO);
             lam = (BigInteger.valueOf(3L).multiply(P1.getX()).multiply(P1.getX()).multiply(base.modPow(p.subtract(BigInteger.TWO), p))).mod(p);
@@ -99,10 +67,6 @@ public class Point  {
 
         BigInteger x3 = (lam.multiply(lam).subtract(P1.getX()).subtract(P2.getX())).mod(p);
         return new Point(x3, lam.multiply(P1.getX().subtract(x3)).subtract(P1.getY()).mod(p));
-    }
-
-    public Point mul(BigInteger n) {
-        return mul(this, n);
     }
 
     public static Point mul(Point P, BigInteger n) {
@@ -127,23 +91,7 @@ public class Point  {
         return P.getY().mod(BigInteger.TWO).compareTo(BigInteger.ZERO) == 0;
     }
 
-    public static boolean isSquare(BigInteger x) {
-        return x.modPow(p.subtract(BigInteger.ONE).mod(BigInteger.TWO), p).longValue() == 1L;
-    }
-
-    public boolean hasSquareY() {
-        return hasSquareY(this);
-    }
-
-    public static boolean hasSquareY(Point P) {
-        Assert.assertTrue(!isInfinite(P));
-        return isSquare(P.getY());
-    }
-
     public static byte[] taggedHash(String tag, byte[] msg) throws NoSuchAlgorithmException {
-
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-
         byte[] tagHash = Util.sha256(tag.getBytes());
         int len = (tagHash.length * 2) + msg.length;
         byte[] buf = new byte[len];
@@ -152,23 +100,6 @@ public class Point  {
         System.arraycopy(msg, 0, buf, tagHash.length * 2, msg.length);
 
         return Util.sha256(buf);
-    }
-
-    public static byte[] genPubKey(byte[] secKey) throws Exception {
-        BigInteger x = Util.bigIntFromBytes(secKey);
-        if(!(BigInteger.ONE.compareTo(x) <= 0 && x.compareTo(getn().subtract(BigInteger.ONE)) <= 0)) {
-            throw new Exception("The secret key must be an integer in the range 1..n-1.");
-        }
-        Point ret = Point.mul(G, x);
-        return bytesFromPoint(ret);
-    }
-
-    public byte[] toBytes() {
-        return bytesFromPoint(this);
-    }
-
-    public static byte[] bytesFromPoint(Point P) {
-        return Util.bytesFromBigInteger(P.getX());
     }
 
     // previously 'pointFromBytes()'
@@ -190,11 +121,10 @@ public class Point  {
     }
 
     public static Point infinityPoint() {
-        return new Point((BigInteger) null, (BigInteger) null);
+        return new Point(null,null);
     }
 
     public boolean equals(Point P) {
         return getPair().equals(P.getPair());
     }
-
 }

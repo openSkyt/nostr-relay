@@ -3,6 +3,7 @@ package org.openskyt.nostrrelay.nostr;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -27,10 +28,9 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session,
-                                      @NonNull org.springframework.web.socket.CloseStatus status) {
+                                      CloseStatus status) throws Exception {
 
-        sessions.remove(session);
-        System.out.println("Session closed. Current session size: " + sessions.size());
+        System.out.println("WebSocket session closed with reason: " + status.getReason());
     }
 
     @Override

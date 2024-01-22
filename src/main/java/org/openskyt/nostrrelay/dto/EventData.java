@@ -1,14 +1,14 @@
 package org.openskyt.nostrrelay.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.openskyt.nostrrelay.model.Event;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class EventData {
 
     private String id;

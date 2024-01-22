@@ -26,16 +26,13 @@ public class NostrSubscriptionFeeder {
      * incoming REQ-data SET
      */
     public void handleNewSubFeed(Set<ReqData> reqDataSet) {
-        Set<EventData> validEventData = new HashSet<>();
-        // filter db-events with filterSubFeed()
-        for (EventData eventData : persistence.retrieveAllEvents()) {
-            validEventData.addAll(filterSubFeed(eventData, reqDataSet));
-        }
-        // send feed and single eose for subscription
-        sendSubFeed(validEventData);
-        WebSocketSession session = reqDataSet.iterator().next().getSubscription().session();
-        try {
-            session.sendMessage(util.eoseMessage(reqDataSet));
+        sendSubFeed(persistence.getNewSubscriptionFeed(reqDataSet));
+        try (WebSocketSession session = reqDataSet.iterator().next().getSubscription().session()) {
+            try {
+                session.sendMessage(util.eoseMessage(reqDataSet));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

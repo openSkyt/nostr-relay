@@ -1,17 +1,15 @@
 package org.openskyt.nostrrelay.BIP340_Schnorr;
 
+import lombok.NoArgsConstructor;
 
+@NoArgsConstructor
 public class Pair<K, V> {
 
-    private K elementLeft = null;
-    private V elementRight = null;
-
-    protected Pair() {
-
-    }
+    private K elementLeft;
+    private V elementRight;
 
     public static <K, V> Pair<K, V> of(K elementLeft, V elementRight) {
-        return new Pair<K, V>(elementLeft, elementRight);
+        return new Pair<>(elementLeft, elementRight);
     }
 
     public Pair(K elementLeft, V elementRight) {
