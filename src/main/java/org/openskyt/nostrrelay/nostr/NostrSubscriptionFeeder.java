@@ -30,7 +30,7 @@ public class NostrSubscriptionFeeder {
      */
     @Transactional
     public void handleNewSubFeed(Set<ReqData> reqDataSet) {
-        sendSubFeed(persistence.getNewSubscriptionFeed(reqDataSet));
+        sendSubFeed(persistence.getNewSubscriptionRequestedData(reqDataSet));
             try {
                 reqDataSet.iterator().next().getSubscription().session().sendMessage(util.eoseMessage(reqDataSet));
             } catch (IOException e) {

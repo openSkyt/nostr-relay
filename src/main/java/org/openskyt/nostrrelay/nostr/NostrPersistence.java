@@ -61,15 +61,14 @@ public class NostrPersistence {
      * @return
      * Set of valid EventData (to send to the client)
      */
-    public Set<EventData> getNewSubscriptionFeed(Set<ReqData> reqDataSet) {
+    public Set<EventData> getNewSubscriptionRequestedData(Set<ReqData> reqDataSet) {
         Set<EventData> validDataSet = new HashSet<>();
 
         // find all matching events in the DB
         reqDataSet.forEach(request -> {
             Set<Event> events = repo.findAllMatchingData(
                     request.getAuthors() == null ? new HashSet<>() : request.getAuthors(),
-                    request.getKinds() == null ? new HashSet<>() : request.getKinds(),
-                    request.getIds() == null ? new HashSet<>() : request.getIds()
+                    request.getKinds() == null ? new HashSet<>() : request.getKinds()
             );
 
             // convert to EventData dto and add subscription info
