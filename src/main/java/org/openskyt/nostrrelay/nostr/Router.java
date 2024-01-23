@@ -3,8 +3,9 @@ package org.openskyt.nostrrelay.nostr;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.openskyt.nostrrelay.dto.CloseData;
-import org.openskyt.nostrrelay.dto.EventData;
-import org.openskyt.nostrrelay.dto.ReqData;
+import org.openskyt.nostrrelay.dto.ReqFilter;
+import org.openskyt.nostrrelay.dto.Subscription;
+import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.observers.CloseObserver;
 import org.openskyt.nostrrelay.observers.EventObserver;
 import org.openskyt.nostrrelay.observers.ReqObserver;
@@ -19,7 +20,7 @@ import java.util.Set;
  */
 @Component
 @RequiredArgsConstructor
-public class NostrMessageHandler {
+public class Router {
 
     private final NostrDeserializer deserializer;
     private final NostrUtil util;
@@ -34,21 +35,28 @@ public class NostrMessageHandler {
      * @param messageJSON
      * incoming message payload
      */
-    public void handleMessage(WebSocketSession session, String messageJSON) {
+    public void handleWSPayload(WebSocketSession session, String messageJSON) {
         try {
             Object[] message = new ObjectMapper().readValue(messageJSON, Object[].class);
             switch (message[0].toString()) {
                 case "REQ"      :
-                    Set<ReqData> reqDataSet = deserializer.deserializeReqMessage(session, messageJSON);
-                    reqObserver.notifyConsumers(reqDataSet);
+                    Set<ReqFilter> reqFilter = deserializer.deserializeReqMessage(messageJSON);
+                    Subscription sub = new Subscription(message[1].toString(), session, reqFilter);
+                    reqObserver.notifyConsumers(sub);
                     break;
                 case "CLOSE"    :
                     CloseData closeData = deserializer.deserializeCloseMessage(session, messageJSON);
                     closeObserver.notifyConsumers(closeData);
                     break;
                 case "EVENT"    :
-                    EventData eventData = deserializer.deserializeEventMessage(session, messageJSON);
-                    eventObserver.notifyConsumers(eventData);
+                    // validate here
+                    Event event = deserializer.deserializeEventMessage(session, messageJSON);
+                    try {
+                        session.sendMessage(util.okMessage(event, true, ""));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    eventObserver.notifyConsumers(event);
                     break;
                 default         :
                     session.sendMessage(util.noticeMessage("Invalid NOSTR message"));

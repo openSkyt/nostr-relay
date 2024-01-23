@@ -11,7 +11,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 // note there might be multiple instances deserialized from a single message
-public class ReqData {
+public class ReqFilter {
 
     private Set<String> ids;
     private Set<String> authors;
@@ -23,6 +23,4 @@ public class ReqData {
     private long since;
     private long until;
     private long limit;
-
-    private Subscription subscription;
 }

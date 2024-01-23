@@ -1,7 +1,7 @@
 package org.openskyt.nostrrelay.config;
 
 import lombok.RequiredArgsConstructor;
-import org.openskyt.nostrrelay.nostr.NostrMessageHandler;
+import org.openskyt.nostrrelay.nostr.Router;
 import org.openskyt.nostrrelay.nostr.NostrWebSocketHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,11 +14,11 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
 
-    private final NostrMessageHandler nostrMessageHandler;
+    private final Router router;
 
     @Bean
     public NostrWebSocketHandler nostrWebSocketHandler() {
-        return new NostrWebSocketHandler(nostrMessageHandler);
+        return new NostrWebSocketHandler(router);
     }
 
     @Override

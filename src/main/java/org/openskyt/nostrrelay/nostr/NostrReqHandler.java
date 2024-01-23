@@ -1,6 +1,6 @@
 package org.openskyt.nostrrelay.nostr;
 
-import org.openskyt.nostrrelay.dto.ReqData;
+import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.openskyt.nostrrelay.model.NostrConsumer;
 import org.openskyt.nostrrelay.observers.ReqObserver;
@@ -26,20 +26,19 @@ public class NostrReqHandler implements NostrConsumer {
 
     /**
      * Handles REQ-message by adding a new subscription to subs then sends EVENT feed for a new subscription back.
-     * @param reqDataSet
+     * @param reqFilterSet
      * parsed REQ-Message data SET
      */
-    private void handle(Set<ReqData> reqDataSet) { // single REQ message may contain multiple ReqData (filter)
-        Subscription subscription = reqDataSet.iterator().next().getSubscription();
-        subscriptionDataManager.addSubscription(subscription, reqDataSet);
-        subscriptionFeeder.handleNewSubFeed(reqDataSet);
+    private void handle(Subscription subscription) { // single REQ message may contain multiple ReqData (filter)
+        subscriptionDataManager.addSubscription(subscription);
+        subscriptionFeeder.sendPersistedData(subscription);
     }
 
     // overridden method from implemented NostrConsumer interface - invokes actual impl. defined in this class
     @Override
     public void handle(Object o) {
-        if (o instanceof Set<?>) {
-            handle((Set<ReqData>) o);
+        if (o instanceof Subscription) {
+            handle((Subscription) o);
         }
     }
 }
