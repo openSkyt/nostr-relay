@@ -32,7 +32,7 @@ public class NostrReqHandler implements NostrConsumer {
     private void handle(Set<ReqData> reqDataSet) { // single REQ message may contain multiple ReqData (filter)
         Subscription subscription = reqDataSet.iterator().next().getSubscription();
         subscriptionDataManager.addSubscription(subscription, reqDataSet);
-        subscriptionFeeder.handleNewSubFeed(reqDataSet);
+        subscriptionFeeder.sendPersistedData(subscription, reqDataSet);
     }
 
     // overridden method from implemented NostrConsumer interface - invokes actual impl. defined in this class

@@ -2,6 +2,7 @@ package org.openskyt.nostrrelay.BIP340_Schnorr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.openskyt.nostrrelay.dto.EventData;
+import org.openskyt.nostrrelay.model.Event;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -14,15 +15,15 @@ import java.util.Collections;
 @Component
 public class EventSigValidator {
 
-    public boolean verifyEvent(EventData eventData) {
+    public boolean verifyEvent(Event event) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             ObjectMapper objectMapper = new ObjectMapper();
             StringBuilder hash = new StringBuilder();
             ArrayList<Object> fields = new ArrayList<>();
 
-            Collections.addAll(fields, 0, eventData.getPubkey().toLowerCase(), eventData.getCreated_at(),
-                    eventData.getKind(), eventData.getTags(), eventData.getContent());
+            Collections.addAll(fields, 0, event.getPubkey().toLowerCase(), event.getCreated_at(),
+                    event.getKind(), event.getTags(), event.getContent());
 
             String eventDataForHash = objectMapper.writeValueAsString(fields);
             byte[] evenDataHash = md.digest(eventDataForHash.getBytes(StandardCharsets.UTF_8)); //hashing eventData wit id set to 0
@@ -31,10 +32,10 @@ public class EventSigValidator {
                 hash.append(String.format("%02x", b));
             }
 
-            if (eventData.getId().contentEquals(hash) &&
-                    verify(Util.hexToBytes(eventData.getId()),
-                            Util.hexToBytes(eventData.getPubkey()),
-                            Util.hexToBytes(eventData.getSig()))) { //todo add logic what to do here
+            if (event.getId().contentEquals(hash) &&
+                    verify(Util.hexToBytes(event.getId()),
+                            Util.hexToBytes(event.getPubkey()),
+                            Util.hexToBytes(event.getSig()))) { //todo add logic what to do here
                 System.out.println("id + hash is valid and signature is valid");
                 return true;
             } else {

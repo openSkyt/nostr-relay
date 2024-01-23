@@ -41,6 +41,6 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
 
         String payload = message.getPayload();
         System.out.println("Message received: " + payload);
-        nostrMessageHandler.handleMessage(session, payload);
+        nostrMessageHandler.router(session, payload);
     }
 }

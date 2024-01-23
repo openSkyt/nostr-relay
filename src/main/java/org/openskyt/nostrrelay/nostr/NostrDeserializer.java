@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.openskyt.nostrrelay.BIP340_Schnorr.EventSigValidator;
 import org.openskyt.nostrrelay.dto.*;
+import org.openskyt.nostrrelay.model.Event;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -32,7 +33,7 @@ public class NostrDeserializer {
      * @return
      * deserialized EVENT-data object
      */
-    public EventData deserializeEventMessage(WebSocketSession session, String messageJSON) {
+    public Event deserializeEventMessage(WebSocketSession session, String messageJSON) {
         try {
             Object[] messageData = mapper.readValue(messageJSON, Object[].class);
             if (messageData.length == 2) {
@@ -47,14 +48,12 @@ public class NostrDeserializer {
 
     /**
      * Deserializes incoming REQ-message into SET of REQ-data objects, adds subscription info. (uses sub method deserializeReq()) Note: there might be more ReqData in a single REQ-message that is why we use Set
-     * @param session
-     * current ws session
      * @param messageJSON
      * incoming REQ message
      * @return
      * deserialized REQ-data SET
      */
-    public Set<ReqData> deserializeReqMessage(WebSocketSession session, String messageJSON) {
+    public Set<ReqData> deserializeReqMessage(String messageJSON) {
         try {
             Object[] messageData = mapper.readValue(messageJSON, Object[].class);
             if (messageData.length > 2) {
@@ -63,9 +62,7 @@ public class NostrDeserializer {
                     // calling sub method
                     reqDataSet.add(deserializeReq(
                             mapper.writeValueAsString(
-                                    messageData[i]),
-                                    session,
-                                    messageData[1].toString())
+                                    messageData[i]))
                     );
                 }
                 return reqDataSet;
@@ -108,19 +105,15 @@ public class NostrDeserializer {
      * @return
      * EVENT-data
      */
-    private EventData deserializeEvent(WebSocketSession session, String eventJSON) {
+    private Event deserializeEvent(WebSocketSession session, String eventJSON) {
         try {
-            EventData eventData = mapper.readValue(eventJSON, EventData.class);
-            eventData.setSubscription(new Subscription(null, session));
-            if (validator.verifyEvent(eventData)) {
-                return eventData;
-            };
-            try {
-                eventData.getSubscription().session().sendMessage(util.okMessage(eventData, false, "invalid crypto data"));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+            Event event = mapper.readValue(eventJSON, Event.class);
+            if (validator.verifyEvent(event)) {
+                return event;
+            } else {
+                throw new RuntimeException("Invalid Event");
             }
-            return null;
+
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -130,23 +123,12 @@ public class NostrDeserializer {
      * Sub method
      * @param reqJSON
      * incoming extracted REQ json
-     * @param session
-     * current ws session
-     * @param subscriptionId
-     * incoming REQ-message subscription id
      * @return
      * REQ-data
      */
-    private ReqData deserializeReq(String reqJSON, WebSocketSession session, String subscriptionId) {
+    private ReqData deserializeReq(String reqJSON) {
         try {
-            ReqData reqData = mapper.readValue(reqJSON, ReqData.class);
-            reqData.setSubscription(
-                    new Subscription(
-                            subscriptionId,
-                            session
-                    )
-            );
-            return reqData;
+            return mapper.readValue(reqJSON, ReqData.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

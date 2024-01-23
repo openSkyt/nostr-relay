@@ -23,6 +23,4 @@ public class ReqData {
     private long since;
     private long until;
     private long limit;
-
-    private Subscription subscription;
 }

@@ -3,8 +3,8 @@ package org.openskyt.nostrrelay.nostr;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.openskyt.nostrrelay.dto.CloseData;
-import org.openskyt.nostrrelay.dto.EventData;
 import org.openskyt.nostrrelay.dto.ReqData;
+import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.observers.CloseObserver;
 import org.openskyt.nostrrelay.observers.EventObserver;
 import org.openskyt.nostrrelay.observers.ReqObserver;
@@ -34,12 +34,13 @@ public class NostrMessageHandler {
      * @param messageJSON
      * incoming message payload
      */
-    public void handleMessage(WebSocketSession session, String messageJSON) {
+    public void router(WebSocketSession session, String messageJSON) {
         try {
             Object[] message = new ObjectMapper().readValue(messageJSON, Object[].class);
             switch (message[0].toString()) {
                 case "REQ"      :
-                    Set<ReqData> reqDataSet = deserializer.deserializeReqMessage(session, messageJSON);
+
+                    Set<ReqData> reqDataSet = deserializer.deserializeReqMessage(messageJSON);
                     reqObserver.notifyConsumers(reqDataSet);
                     break;
                 case "CLOSE"    :
@@ -47,8 +48,14 @@ public class NostrMessageHandler {
                     closeObserver.notifyConsumers(closeData);
                     break;
                 case "EVENT"    :
-                    EventData eventData = deserializer.deserializeEventMessage(session, messageJSON);
-                    eventObserver.notifyConsumers(eventData);
+                    Event event = deserializer.deserializeEventMessage(session, messageJSON);
+                    try {
+                        session.sendMessage(util.okMessage(event, true, ""));
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    // validate here
+                    eventObserver.notifyConsumers(event);
                     break;
                 default         :
                     session.sendMessage(util.noticeMessage("Invalid NOSTR message"));

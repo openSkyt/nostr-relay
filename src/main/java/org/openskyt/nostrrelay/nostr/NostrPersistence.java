@@ -21,9 +21,8 @@ public class NostrPersistence {
 
     private final EventRepository repo;
 
-    public void save(EventData eventData) {
-        repo.save(new Event(eventData));
-        dbLog(eventData);
+    public void save(Event event) {
+        repo.save(event);
     }
 
     public EventData retrieveEvent(String id) {
@@ -31,27 +30,16 @@ public class NostrPersistence {
         return optEvent.map(EventData::new).orElse(null);
     }
 
-    public void delete(EventData eventData) {
+    public void delete(Event event) {
         try {
-            repo.deleteById(eventData.getId());
+            repo.deleteById(event.getId());
         } catch (Exception e) {
             throw new RuntimeException();
         }
     }
 
-    public Optional<EventData> retrieveMetaData(String pubkey) {
-        return repo.findByPubkeyAndByKind(pubkey, 0).stream().findAny().map(EventData::new);
-    }
-
-    public void dbLog(EventData eventData) {
-        System.out.println("db: Currently saved events: " + getEventCount());
-        if (repo.findById(eventData.getId()).isPresent()) {
-            System.out.println("db: last saved event: " + retrieveEvent(eventData.getId()).toString());
-        }
-    }
-
-    public long getEventCount() {
-        return repo.count();
+    public Optional<Event> retrieveMetaData(String pubkey) {
+        return repo.findByPubkeyAndByKind(pubkey, 0).stream().findAny();
     }
 
     /**
@@ -61,24 +49,15 @@ public class NostrPersistence {
      * @return
      * Set of valid EventData (to send to the client)
      */
-    public Set<EventData> getNewSubscriptionRequestedData(Set<ReqData> reqDataSet) {
-        Set<EventData> validDataSet = new HashSet<>();
+    public Set<Event> getAllEvents(Set<ReqData> reqDataSet) {
+        Set<Event> events = new HashSet<>();
 
         // find all matching events in the DB
-        reqDataSet.forEach(request -> {
-            Set<Event> events = repo.findAllMatchingData(
+        reqDataSet.forEach(request -> events.addAll(repo.findAllMatchingData(
                     request.getAuthors() == null ? new HashSet<>() : request.getAuthors(),
                     request.getKinds() == null ? new HashSet<>() : request.getKinds()
-            );
-
-            // convert to EventData dto and add subscription info
-            Set<EventData> eventDataSet = events.stream()
-                    .map(EventData::new)
-                    .collect(Collectors.toSet());
-            eventDataSet.forEach(e -> e.setSubscription(request.getSubscription()));
-
-            validDataSet.addAll(eventDataSet);
-        });
-        return validDataSet;
+            ))
+        );
+        return events;
     }
 }
