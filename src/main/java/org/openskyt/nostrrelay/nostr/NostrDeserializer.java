@@ -9,7 +9,6 @@ import org.openskyt.nostrrelay.model.Event;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -53,19 +52,19 @@ public class NostrDeserializer {
      * @return
      * deserialized REQ-data SET
      */
-    public Set<ReqData> deserializeReqMessage(String messageJSON) {
+    public Set<ReqFilter> deserializeReqMessage(String messageJSON) {
         try {
             Object[] messageData = mapper.readValue(messageJSON, Object[].class);
             if (messageData.length > 2) {
-                Set<ReqData> reqDataSet = new HashSet<>();
+                Set<ReqFilter> reqFilterSet = new HashSet<>();
                 for (int i = 2; i < messageData.length; i++) {
                     // calling sub method
-                    reqDataSet.add(deserializeReq(
+                    reqFilterSet.add(deserializeReq(
                             mapper.writeValueAsString(
                                     messageData[i]))
                     );
                 }
-                return reqDataSet;
+                return reqFilterSet;
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -86,10 +85,7 @@ public class NostrDeserializer {
         try {
             Object[] array = mapper.readValue(messageJSON, Object[].class);
             return  new CloseData(
-                        new Subscription(
-                            array[1].toString(),
-                            session
-                        )
+                        new Subscription(array[1].toString(), session, Set.of())
             );
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -126,9 +122,9 @@ public class NostrDeserializer {
      * @return
      * REQ-data
      */
-    private ReqData deserializeReq(String reqJSON) {
+    private ReqFilter deserializeReq(String reqJSON) {
         try {
-            return mapper.readValue(reqJSON, ReqData.class);
+            return mapper.readValue(reqJSON, ReqFilter.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

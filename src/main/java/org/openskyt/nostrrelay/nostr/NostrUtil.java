@@ -2,8 +2,7 @@ package org.openskyt.nostrrelay.nostr;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.openskyt.nostrrelay.dto.EventData;
-import org.openskyt.nostrrelay.dto.ReqData;
+import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.openskyt.nostrrelay.model.Event;
 import org.springframework.stereotype.Component;
@@ -45,12 +44,12 @@ public class NostrUtil {
 
     /**
      * Parses NOSTR EOSE-message to be sent to client
-     * @param reqDataSet
+     * @param reqFilterSet
      * REQ-data SET related to subscription
      * @return
      * TextMessage to be sent by WebSocketSession
      */
-    public TextMessage eoseMessage(Set<ReqData> reqDataSet, Subscription subscription) {
+    public TextMessage eoseMessage(Subscription subscription) {
         return new TextMessage("[\"EOSE\",\"" + subscription.subscription_id() + "\"]");
     }
 

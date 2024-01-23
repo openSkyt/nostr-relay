@@ -18,7 +18,7 @@ import java.util.*;
 public class NostrWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private final NostrMessageHandler nostrMessageHandler;
+    private final Router router;
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
@@ -41,6 +41,6 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
 
         String payload = message.getPayload();
         System.out.println("Message received: " + payload);
-        nostrMessageHandler.router(session, payload);
+        router.handleWSPayload(session, payload);
     }
 }

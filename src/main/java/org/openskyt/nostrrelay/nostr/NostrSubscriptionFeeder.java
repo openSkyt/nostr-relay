@@ -2,7 +2,7 @@ package org.openskyt.nostrrelay.nostr;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.openskyt.nostrrelay.dto.ReqData;
+import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.openskyt.nostrrelay.model.Event;
 import org.springframework.stereotype.Component;
@@ -25,13 +25,12 @@ public class NostrSubscriptionFeeder {
     /**
      * Feeds newly created subscription with REQuested retrieved existing EVENT-data
      *
-     * @param reqDataSet incoming REQ-data SET
      */
     @Transactional
-    public void sendPersistedData(Subscription subscription, Set<ReqData> reqDataSet) {
-        sendEvents(subscription, persistence.getAllEvents(reqDataSet));
+    public void sendPersistedData(Subscription subscription) {
+        sendEvents(subscription, persistence.getAllEvents(subscription.filters()));
         try {
-            subscription.session().sendMessage(util.eoseMessage(reqDataSet, subscription));
+            subscription.session().sendMessage(util.eoseMessage(subscription));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -44,29 +43,28 @@ public class NostrSubscriptionFeeder {
      */
     public void handleNewEvent(Event event) {
         // filter incoming event by each ReqData in Map<Subscription, Set<ReqData>> - for each sub individually
-        for (Map.Entry<Subscription, Set<ReqData>> entry : subscriptionDataManager.getAllSubs().entrySet()) {
-            Set<ReqData> reqDataSet = entry.getValue();
-            if(doesMatch(event, reqDataSet)) {
-                sendEvents(entry.getKey(), Set.of(event));
+        for (Subscription subscription : subscriptionDataManager.getAllSubscriptions()) {
+
+            if(doesMatch(event, subscription.filters())) {
+                sendEvents(subscription, Set.of(event));
             }
         }
-
     }
 
     /**
      * Compares EVENT-data to REQ-data specifics. Sets the right subscription data to event after filtering. Note there might be more REQ-data for single subscription. This method is meant to be cast inside subscription handling methods. (sub method)
      *
      * @param event  EVENT-data to examine
-     * @param reqDataSet REQ-data SET to filter by
+     * @param reqFilterSet REQ-data SET to filter by
      * @return compatible EVENT-data
      */
-    private boolean doesMatch(Event event, Set<ReqData> reqDataSet) {
+    private boolean doesMatch(Event event, Set<ReqFilter> reqFilterSet) {
         // if the filter is blank, formal logic dictates that everything shall pass.
-        if (reqDataSet == null) {
+        if (reqFilterSet == null) {
             return false;
         }
 
-        for (var r : reqDataSet) {
+        for (var r : reqFilterSet) {
             if ((r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(event.getKind()))                      // kinds filter
                     && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(event.getPubkey()))) {    // authors filter
 
@@ -80,7 +78,6 @@ public class NostrSubscriptionFeeder {
     /**
      * Sends EVENT-data SET to client (sub method)
      *
-     * @param eventDataSet EventData to send to client
      */
     private void sendEvents(Subscription subscription, Set<Event> events) {
         events.forEach(event -> {
