@@ -3,7 +3,6 @@ package org.openskyt.nostrrelay.nostr;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
-import org.openskyt.nostrrelay.BIP340_Schnorr.EventSigValidator;
 import org.openskyt.nostrrelay.dto.*;
 import org.openskyt.nostrrelay.model.Event;
 import org.springframework.stereotype.Component;
@@ -13,31 +12,28 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Used to deserialize NOSTR-messages into Java DTO
+ * Used to deserialize NOSTR-messages into Java DTOs
  */
 @Getter
 @Component
 public class NostrDeserializer {
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private final EventSigValidator validator = new EventSigValidator();
     private final NostrUtil util = new NostrUtil();
 
     /**
      * Deserializes incoming EVENT-message into EVENT-data object, adds session info. (uses sub method deserializeEvent())
-     * @param session
-     * current ws session
      * @param messageJSON
      * incoming EVENT-message
      * @return
      * deserialized EVENT-data object
      */
-    public Event deserializeEventMessage(WebSocketSession session, String messageJSON) {
+    public Event deserializeEventMessage(String messageJSON) {
         try {
             Object[] messageData = mapper.readValue(messageJSON, Object[].class);
             if (messageData.length == 2) {
                 // calling sub method
-                return deserializeEvent(session, mapper.writeValueAsString(messageData[1]));
+                return deserializeEvent(mapper.writeValueAsString(messageData[1]));
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -94,25 +90,19 @@ public class NostrDeserializer {
 
     /**
      * Sub method
-     * @param session
-     * current ws session
      * @param eventJSON
      * incoming extracted EVENT json
      * @return
-     * EVENT-data
+     * EVENT-object
      */
-    private Event deserializeEvent(WebSocketSession session, String eventJSON) {
+    private Event deserializeEvent(String eventJSON) {
+        Event event;
         try {
-            Event event = mapper.readValue(eventJSON, Event.class);
-            if (validator.verifyEvent(event)) {
-                return event;
-            } else {
-                throw new RuntimeException("Invalid Event");
-            }
-
+            event = mapper.readValue(eventJSON, Event.class);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+        return event;
     }
 
     /**

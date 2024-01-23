@@ -44,8 +44,6 @@ public class NostrUtil {
 
     /**
      * Parses NOSTR EOSE-message to be sent to client
-     * @param reqFilterSet
-     * REQ-data SET related to subscription
      * @return
      * TextMessage to be sent by WebSocketSession
      */

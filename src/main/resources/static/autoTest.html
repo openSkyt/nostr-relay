@@ -143,12 +143,8 @@
                 if (message.data === JSON.stringify(["OK","3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f",true,""])) {
                     appendMessage("T2-1b| " + message.data, "success");
                     appendMessage("T2-1b| OK - event accepted", "success");
-                }
-                else if (message.data === JSON.stringify(["OK","3beb2f883fb05942dd6b2bcea55d11124724aba191a2274e4e4cb24a1318aa8f",true,"metadata updated"])) {
-                    appendMessage("T2-1b| " + message.data, "warning");
-                    appendMessage("T2-1b| WARN - metadata overwritten?", "warning");
                 } else {
-                    appendMessage("T2-1b| " + message.data, "success");
+                    appendMessage("T2-1b| " + message.data, "fail");
                     appendMessage("T2-1b| FAIL - bad response", "fail");
                 }
                 socket.removeEventListener('message', onKind0Event1Response);
@@ -180,7 +176,7 @@
                 appendMessage("T2-2a| Message from relay received:", "success");
 
                 // T2-2b
-                if (message.data === '["OK","3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59",true,"metadata updated"]') {
+                if (message.data === '["OK","3cb094d2613d5481378e3a5a9e04cec6d8114df449a25c0bc99010a133a71b59",true,""]') {
                     appendMessage("T2-2b| " + message.data, "success");
                     appendMessage("T2-2b| OK - metadata updated", "success");
                 } else {

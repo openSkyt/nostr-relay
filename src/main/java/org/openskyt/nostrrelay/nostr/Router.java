@@ -2,6 +2,7 @@ package org.openskyt.nostrrelay.nostr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.openskyt.nostrrelay.BIP340_Schnorr.EventSigValidator;
 import org.openskyt.nostrrelay.dto.CloseData;
 import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.dto.Subscription;
@@ -23,6 +24,7 @@ import java.util.Set;
 public class Router {
 
     private final NostrDeserializer deserializer;
+    private final EventSigValidator sigValidator;
     private final NostrUtil util;
     private final CloseObserver closeObserver;
     private final ReqObserver reqObserver;
@@ -49,8 +51,11 @@ public class Router {
                     closeObserver.notifyConsumers(closeData);
                     break;
                 case "EVENT"    :
-                    // validate here
-                    Event event = deserializer.deserializeEventMessage(session, messageJSON);
+                    Event event = deserializer.deserializeEventMessage(messageJSON);
+                    if (!sigValidator.verifyEvent(event)) {
+                        session.sendMessage(util.okMessage(event, false, "invalid crypto data"));
+                        return;
+                    }
                     try {
                         session.sendMessage(util.okMessage(event, true, ""));
                     } catch (IOException e) {
@@ -60,7 +65,6 @@ public class Router {
                     break;
                 default         :
                     session.sendMessage(util.noticeMessage("Invalid NOSTR message"));
-                    System.out.println("MessageHandler: Invalid nostr message!");
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
