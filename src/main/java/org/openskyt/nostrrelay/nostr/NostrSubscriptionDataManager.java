@@ -19,14 +19,12 @@ public class NostrSubscriptionDataManager {
         subscriptions.add(subscription);
     }
 
-    public void removeSubscription(Subscription subscription) {
-        subscriptions.remove(subscription);
-    }
-
     public void closeSub(CloseData closeData) {
-        if (subscriptions.contains(closeData.subscription())) {
-            removeSubscription(closeData.subscription());
-            System.out.println("Current subscription closed");
+        for (Subscription s : subscriptions) {
+            if (closeData.session().equals(s.session()) && closeData.subscription_id().equals(s.subscription_id())) {
+                subscriptions.remove(s);
+                return;
+            }
         }
     }
 

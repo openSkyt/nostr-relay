@@ -79,10 +79,8 @@ public class NostrDeserializer {
      */
     public CloseData deserializeCloseMessage(WebSocketSession session, String messageJSON) {
         try {
-            Object[] array = mapper.readValue(messageJSON, Object[].class);
-            return  new CloseData(
-                        new Subscription(array[1].toString(), session, Set.of())
-            );
+            Object[] message = mapper.readValue(messageJSON, Object[].class);
+            return  new CloseData(session, message[1].toString());
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

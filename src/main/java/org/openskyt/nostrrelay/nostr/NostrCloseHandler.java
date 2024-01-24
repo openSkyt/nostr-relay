@@ -34,7 +34,7 @@ public class NostrCloseHandler implements NostrConsumer {
     private void handle(CloseData closeData) {
         subscriptionDataManager.closeSub(closeData);
         try {
-            closeData.subscription().session().sendMessage(util.noticeMessage("subscription closed"));
+            closeData.session().sendMessage(util.noticeMessage("subscription closed"));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

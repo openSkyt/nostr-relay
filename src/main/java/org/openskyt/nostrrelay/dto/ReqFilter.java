@@ -22,5 +22,5 @@ public class ReqFilter {
     private Set<String> p;
     private Long since;
     private Long until;
-    private long limit;
+    private Integer limit;
 }

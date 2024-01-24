@@ -39,7 +39,7 @@ public class EventService implements NostrConsumer {
      * incoming EVENT-data
      */
     private void handleEvent_0(Event event) {
-        Optional<Event> optEventData = persistence.retrieveMetaData(event.getPubkey());
+        Optional<Event> optEventData = persistence.getMetaData(event.getPubkey());
         // remove redundant data
         optEventData.ifPresent(persistence::delete);
         persistence.save(event);

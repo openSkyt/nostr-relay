@@ -61,7 +61,7 @@ public class NostrSubscriptionFeeder implements NostrConsumer {
     }
 
     /**
-     * Compares EVENT-data to REQ-data specifics. Sets the right subscription data to event after filtering. Note there might be more REQ-data for single subscription. This method is meant to be cast inside subscription handling methods. (sub method)
+     * Compares EVENT-data to REQ-data specifics. Note there might be more REQ-data for single subscription.
      * @param event  EVENT-data to examine
      * @param reqFilterSet REQ-data SET to filter by
      * @return compatible EVENT-data
@@ -72,9 +72,11 @@ public class NostrSubscriptionFeeder implements NostrConsumer {
         }
 
         for (ReqFilter r : reqFilterSet) {
-            if ((r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(event.getKind()))                      // kinds filter
-                    && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(event.getPubkey()))) {    // authors filter
-
+            if ((r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(event.getKind()))
+                && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(event.getPubkey()))
+                && (r.getIds() == null || r.getIds().isEmpty() || r.getIds().contains(event.getId()))
+                && (r.getSince() == null || r.getSince() <= event.getCreated_at())
+                && (r.getUntil() == null || r.getUntil() >= event.getCreated_at())) {
                 return true;
             }
         }
@@ -82,7 +84,7 @@ public class NostrSubscriptionFeeder implements NostrConsumer {
     }
 
     /**
-     * Sends EVENT-data SET to client (sub method)
+     * Sends parsed EVENT-data SET to client (sub method)
      *
      */
     private void sendEvents(Subscription subscription, Set<Event> events) {

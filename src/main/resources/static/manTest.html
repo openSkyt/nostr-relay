@@ -56,7 +56,8 @@
         "sig": "abc"
       };
       const reqData = {
-          "kinds": [1]
+        "kinds": [1],
+        "limit": 3
       }
       const reqData2 = {
         "authors": ["pubkey3"],
@@ -71,7 +72,7 @@
       const eventMessage1_0 = JSON.stringify(["EVENT", eventData3]);
       const eventMessage2_0 = JSON.stringify(["EVENT", eventData4]);
       const reqMessage = JSON.stringify(["REQ", "sample_sub_id", reqData]);
-      const reqMessage2 = JSON.stringify(["REQ", "sample_sub_id2", reqData2, reqData]);
+      const reqMessage2 = JSON.stringify(["REQ", "sample_sub_id2", reqData2]);
       const reqMessage3 = JSON.stringify(["REQ", "sample_sub_id4", reqDataKind0]);
       const closeMessage = JSON.stringify(["CLOSE", "sample_sub_id"]);
       const closeMessage2 = JSON.stringify(["CLOSE", "sample_sub_id2"]);

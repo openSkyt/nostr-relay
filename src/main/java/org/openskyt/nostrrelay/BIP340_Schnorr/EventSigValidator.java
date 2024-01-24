@@ -25,22 +25,16 @@ public class EventSigValidator {
                     event.getKind(), event.getTags(), event.getContent());
 
             String eventDataForHash = objectMapper.writeValueAsString(fields);
-            byte[] evenDataHash = md.digest(eventDataForHash.getBytes(StandardCharsets.UTF_8)); //hashing eventData wit id set to 0
+            byte[] evenDataHash = md.digest(eventDataForHash.getBytes(StandardCharsets.UTF_8)); //hashing eventData with id set to 0
 
             for (byte b : evenDataHash) { //convert byte array to hex for comparison wth id(hash)) from client
                 hash.append(String.format("%02x", b));
             }
 
-            if (event.getId().contentEquals(hash) &&
+            return event.getId().contentEquals(hash) &&
                     verify(Util.hexToBytes(event.getId()),
                             Util.hexToBytes(event.getPubkey()),
-                            Util.hexToBytes(event.getSig()))) { //todo add logic what to do here
-                System.out.println("id + hash is valid and signature is valid");
-                return true;
-            } else {
-                System.out.println("hash is not match or signature is not valid");
-                return false;
-            }
+                            Util.hexToBytes(event.getSig()));
 
         } catch (Exception e) {
             System.out.println("cant verify event");

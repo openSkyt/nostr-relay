@@ -33,7 +33,7 @@ public class NostrPersistence {
         }
     }
 
-    public Optional<Event> retrieveMetaData(String pubkey) {
+    public Optional<Event> getMetaData(String pubkey) {
         return repo.findByPubkeyAndByKind(pubkey, 0).stream().findAny();
     }
 
@@ -51,6 +51,10 @@ public class NostrPersistence {
                 criteria.and("kind").in(request.getKinds());
             }
 
+            if (request.getIds() != null && !request.getIds().isEmpty()) {
+                criteria.and("id").in(request.getIds());
+            }
+
             if (request.getSince() != null) {
                 criteria.and("created_at").gte(request.getSince());
             }
@@ -59,10 +63,14 @@ public class NostrPersistence {
                 criteria.and("created_at").lte(request.getUntil());
             }
 
-            Query query = new BasicQuery(criteria.getCriteriaObject());
-            events.addAll(mongoTemplate.find(query, Event.class));
+            if (request.getLimit() != null) {
+                Query limitedQuery = new BasicQuery(criteria.getCriteriaObject()).limit(request.getLimit());
+                events.addAll(mongoTemplate.find(limitedQuery, Event.class));
+            } else {
+                Query query = new BasicQuery(criteria.getCriteriaObject());
+                events.addAll(mongoTemplate.find(query, Event.class));
+            }
         });
-
         return events;
     }
 }
