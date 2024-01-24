@@ -20,7 +20,7 @@ public class ReqFilter {
     private Set<String> e;
     @JsonProperty("#p")
     private Set<String> p;
-    private long since;
-    private long until;
+    private Long since;
+    private Long until;
     private long limit;
 }
