@@ -1,12 +1,9 @@
 package org.openskyt.nostrrelay.nostr;
 
-import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.openskyt.nostrrelay.model.NostrConsumer;
 import org.openskyt.nostrrelay.observers.ReqObserver;
 import org.springframework.stereotype.Component;
-
-import java.util.Set;
 
 /** Handles REQ related logic, invokes SubscriptionFeeder.handleNewSubFeed() in order to send requested EVENT-data to client.
  *
@@ -15,23 +12,18 @@ import java.util.Set;
 public class NostrReqHandler implements NostrConsumer {
 
     private final NostrSubscriptionDataManager subscriptionDataManager;
-    private final NostrSubscriptionFeeder subscriptionFeeder;
 
-    public NostrReqHandler(ReqObserver observer, NostrSubscriptionDataManager subscriptionDataManager, NostrSubscriptionFeeder subscriptionFeeder) {
+    public NostrReqHandler(ReqObserver observer, NostrSubscriptionDataManager subscriptionDataManager) {
         this.subscriptionDataManager = subscriptionDataManager;
-        this.subscriptionFeeder = subscriptionFeeder;
 
         observer.subscribe(this);
     }
 
     /**
      * Handles REQ-message by adding a new subscription to subs then sends EVENT feed for a new subscription back.
-     * @param reqFilterSet
-     * parsed REQ-Message data SET
      */
     private void handle(Subscription subscription) { // single REQ message may contain multiple ReqData (filter)
         subscriptionDataManager.addSubscription(subscription);
-        subscriptionFeeder.sendPersistedData(subscription);
     }
 
     // overridden method from implemented NostrConsumer interface - invokes actual impl. defined in this class

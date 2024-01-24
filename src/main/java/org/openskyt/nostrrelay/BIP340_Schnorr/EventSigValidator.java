@@ -1,7 +1,6 @@
 package org.openskyt.nostrrelay.BIP340_Schnorr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.openskyt.nostrrelay.dto.EventData;
 import org.openskyt.nostrrelay.model.Event;
 import org.springframework.stereotype.Component;
 

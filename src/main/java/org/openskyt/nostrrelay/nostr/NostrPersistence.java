@@ -1,7 +1,6 @@
 package org.openskyt.nostrrelay.nostr;
 
 import lombok.RequiredArgsConstructor;
-import org.openskyt.nostrrelay.dto.EventData;
 import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.repository.EventRepository;
@@ -22,11 +21,6 @@ public class NostrPersistence {
 
     public void save(Event event) {
         repo.save(event);
-    }
-
-    public EventData retrieveEvent(String id) {
-        Optional<Event> optEvent = repo.findById(id);
-        return optEvent.map(EventData::new).orElse(null);
     }
 
     public void delete(Event event) {

@@ -13,11 +13,9 @@ import java.util.Optional;
 @Component
 public class EventService implements NostrConsumer {
     private final NostrPersistence persistence;
-    private final NostrSubscriptionFeeder subscriptionFeeder;
 
-    public EventService(EventObserver observer, NostrPersistence persistence, NostrSubscriptionFeeder subscriptionFeeder) {
+    public EventService(EventObserver observer, NostrPersistence persistence) {
         this.persistence = persistence;
-        this.subscriptionFeeder = subscriptionFeeder;
 
         observer.subscribe(this);
     }
@@ -33,7 +31,6 @@ public class EventService implements NostrConsumer {
             case 1      : handleEvent_1(event); break;
             default     : System.out.println("ignoring event: " + event);
         }
-        subscriptionFeeder.handleNewEvent(event); // handle event -> then broadcast :)
     }
 
     /**
@@ -45,7 +42,6 @@ public class EventService implements NostrConsumer {
         Optional<Event> optEventData = persistence.retrieveMetaData(event.getPubkey());
         // remove redundant data
         optEventData.ifPresent(persistence::delete);
-
         persistence.save(event);
     }
 
