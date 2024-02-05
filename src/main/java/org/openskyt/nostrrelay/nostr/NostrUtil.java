@@ -2,13 +2,10 @@ package org.openskyt.nostrrelay.nostr;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.openskyt.nostrrelay.model.Event;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
-
-import java.util.Set;
 
 @Component
 public class NostrUtil {
