@@ -99,28 +99,16 @@ public class NostrPersistence {
         return events;
     }
 
-    @Scheduled(fixedRate = 600_000) // each 10 minutes
+    @Scheduled(fixedRate = 60_000) // every minute
     private void removeDocumentsWithExpiredTimestamp() {
-        Query query = Query.query(Criteria.where("tags")
-                .elemMatch(Criteria.where("0").is("expiration"))
-        );
+        Query query = Query.query(Criteria.where("expiration").exists(true));
         List<Event> expiringEvents = mongoTemplate.find(query, Event.class);
-
+        System.out.println("expiring events count: " + expiringEvents.size());
         for (Event event : expiringEvents) {
-            Long expirationValue = getExpirationValue(event.getTags());
-            if (expirationValue != null && expirationValue <= (System.currentTimeMillis() / 1000L)) {
+            if (event.getExpiration() != null && event.getExpiration() <= (System.currentTimeMillis() / 1000L)) {
                 removeDocument(event.getId());
             }
         }
-    }
-
-    private Long getExpirationValue(String[][] tags) {
-        for (String[] tag : tags) {
-            if (tag.length > 1 && "expiration".equals(tag[0])) {
-                return Long.parseLong(tag[1]);
-            }
-        }
-        return null;
     }
 
     private void removeDocument(String documentId) {
