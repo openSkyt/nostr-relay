@@ -19,7 +19,7 @@ public class NostrRelayApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) {
-		eventRepository.save(new Event("id1", "pubkey1", 111111, 1, new String[][]{{"p","pubkey3"}}, "content1", "sig1"));
+		eventRepository.save(new Event("id1", "pubkey1", 111111, 1, new String[][]{{"p","pubkey3"},{"expiration", "20"}}, "content1", "sig1"));
 		eventRepository.save(new Event("id2", "pubkey1", 111111, 1, new String[][]{}, "content2", "sig2"));
 		eventRepository.save(new Event("id3", "pubkey2", 222222, 1, new String[][]{}, "content3", "sig3"));
 		eventRepository.save(new Event("xxxxx", "xxxxxx", 222222, 1, new String[][]{}, "xxxxxxxxxxx", "xxxx"));

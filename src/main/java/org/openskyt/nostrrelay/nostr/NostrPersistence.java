@@ -7,14 +7,18 @@ import org.openskyt.nostrrelay.repository.EventRepository;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@EnableScheduling
 public class NostrPersistence {
 
     private final EventRepository repo;
@@ -93,5 +97,34 @@ public class NostrPersistence {
             }
         });
         return events;
+    }
+
+    @Scheduled(fixedRate = 600_000) // each 10 minutes
+    private void removeDocumentsWithExpiredTimestamp() {
+        Query query = Query.query(Criteria.where("tags")
+                .elemMatch(Criteria.where("0").is("expiration"))
+        );
+        List<Event> expiringEvents = mongoTemplate.find(query, Event.class);
+
+        for (Event event : expiringEvents) {
+            Long expirationValue = getExpirationValue(event.getTags());
+            if (expirationValue != null && expirationValue <= (System.currentTimeMillis() / 1000L)) {
+                removeDocument(event.getId());
+            }
+        }
+    }
+
+    private Long getExpirationValue(String[][] tags) {
+        for (String[] tag : tags) {
+            if (tag.length > 1 && "expiration".equals(tag[0])) {
+                return Long.parseLong(tag[1]);
+            }
+        }
+        return null;
+    }
+
+    private void removeDocument(String documentId) {
+        Query removeQuery = Query.query(Criteria.where("_id").is(documentId));
+        mongoTemplate.remove(removeQuery, "event");
     }
 }
