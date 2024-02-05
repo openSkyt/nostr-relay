@@ -12,7 +12,6 @@ import java.util.Set;
 @Component
 public class NostrSubscriptionDataManager {
 
-    // relay's current subscriptions data
     private final Set<Subscription> subscriptions = new HashSet<>();
 
     public void addSubscription(Subscription subscription) {

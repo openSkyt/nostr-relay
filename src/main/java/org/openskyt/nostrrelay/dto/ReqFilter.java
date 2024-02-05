@@ -10,17 +10,19 @@ import java.util.Set;
 @Getter
 @Setter
 @NoArgsConstructor
-// note there might be multiple instances deserialized from a single message
 public class ReqFilter {
 
     private Set<String> ids;
     private Set<String> authors;
     private Set<Integer> kinds;
+    private Long since;
+    private Long until;
+    private Integer limit;
+
     @JsonProperty("#e")
     private Set<String> e;
     @JsonProperty("#p")
     private Set<String> p;
-    private Long since;
-    private Long until;
-    private Integer limit;
+    @JsonProperty("#t")
+    private Set<String> t;
 }

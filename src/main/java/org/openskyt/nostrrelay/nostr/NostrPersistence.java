@@ -5,7 +5,6 @@ import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.repository.EventRepository;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
@@ -37,6 +36,13 @@ public class NostrPersistence {
         return repo.findByPubkeyAndByKind(pubkey, 0).stream().findAny();
     }
 
+    /**
+     * Retrieves requested data based on request filter sent by client in REQ-message
+     * @param reqFilterSet
+     * subscription filter-set
+     * @return
+     * valid persisted event data
+     */
     public Set<Event> getAllEvents(Set<ReqFilter> reqFilterSet) {
         Set<Event> events = new HashSet<>();
 
@@ -55,19 +61,34 @@ public class NostrPersistence {
                 criteria.and("id").in(request.getIds());
             }
 
+            if (request.getE() != null && !request.getE().isEmpty()) {
+                criteria.and("tags").elemMatch(
+                        Criteria.where("0").is("e").and("1").in(request.getE())
+                );
+            }
+            if (request.getP() != null && !request.getP().isEmpty()) {
+                criteria.and("tags").elemMatch(
+                        Criteria.where("0").is("p").and("1").in(request.getP())
+                );
+            }
+            if (request.getT() != null && !request.getT().isEmpty()) {
+                criteria.and("tags").elemMatch(
+                        Criteria.where("0").is("t").and("1").in(request.getT())
+                );
+            }
+
             if (request.getSince() != null) {
                 criteria.and("created_at").gte(request.getSince());
             }
-
             if (request.getUntil() != null) {
                 criteria.and("created_at").lte(request.getUntil());
             }
 
             if (request.getLimit() != null) {
-                Query limitedQuery = new BasicQuery(criteria.getCriteriaObject()).limit(request.getLimit());
+                Query limitedQuery = new Query(criteria).limit(request.getLimit());
                 events.addAll(mongoTemplate.find(limitedQuery, Event.class));
             } else {
-                Query query = new BasicQuery(criteria.getCriteriaObject());
+                Query query = new Query(criteria);
                 events.addAll(mongoTemplate.find(query, Event.class));
             }
         });

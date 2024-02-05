@@ -24,7 +24,7 @@
           "pubkey": "pubkey3",
           "created_at": 1632871,
           "kind": 1,
-          "tags": [],
+          "tags": [["p", "pubkey3"]],
           "content": "cool content",
           "sig": "xyz"
       };
@@ -56,8 +56,7 @@
         "sig": "abc"
       };
       const reqData = {
-        "kinds": [1],
-        "limit": 3
+        "#p": ["pubkey3"]
       }
       const reqData2 = {
         "authors": ["pubkey3"],
