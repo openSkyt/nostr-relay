@@ -17,11 +17,11 @@ import java.util.Set;
 @Component
 public class NostrSubscriptionFeeder implements NostrConsumer {
 
-    private final NostrPersistence persistence;
+    private final EventService persistence;
     private final NostrSubscriptionDataManager subscriptionDataManager;
     private final NostrUtil util;
 
-    public NostrSubscriptionFeeder(NostrPersistence persistence,
+    public NostrSubscriptionFeeder(EventService persistence,
                                    NostrSubscriptionDataManager subscriptionDataManager,
                                    NostrUtil util,
                                    EventObserver eventObserver,

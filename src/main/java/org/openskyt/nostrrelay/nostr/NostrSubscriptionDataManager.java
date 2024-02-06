@@ -35,7 +35,6 @@ public class NostrSubscriptionDataManager implements NostrConsumer {
 
     public void removeSubscription(WebSocketSession session) {
         subscriptions.removeIf(sub -> sub.session().equals(session));
-        System.out.println("current sub size: " + subscriptions.size());
     }
 
     public Set<Subscription> getAllSubscriptions() {

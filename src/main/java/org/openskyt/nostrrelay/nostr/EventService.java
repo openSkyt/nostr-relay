@@ -19,7 +19,7 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 @EnableScheduling
-public class NostrPersistence {
+public class EventService {
 
     private final EventRepository repo;
     private final MongoTemplate mongoTemplate;
@@ -99,7 +99,6 @@ public class NostrPersistence {
         return events;
     }
 
-    // TODO - přesunout do jiného package
     @Scheduled(fixedRate = 60_000) // every minute
     private void removeDocumentsWithExpiredTimestamp() {
         Query query = Query.query(Criteria.where("expiration").exists(true));
@@ -115,5 +114,9 @@ public class NostrPersistence {
     private void removeDocument(String documentId) {
         Query removeQuery = Query.query(Criteria.where("_id").is(documentId));
         mongoTemplate.remove(removeQuery, "event");
+    }
+
+    public boolean exists(String id) {
+        return repo.existsById(id);
     }
 }

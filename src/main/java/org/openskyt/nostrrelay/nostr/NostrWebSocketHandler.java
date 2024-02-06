@@ -43,8 +43,7 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
     public void handleTextMessage(@NonNull WebSocketSession session,
                                   TextMessage message) {
 
-        String payload = message.getPayload();
-        System.out.println("Message received: " + payload);
-        router.handleWSPayload(session, payload);
+        System.out.println(".");
+        router.handleWSPayload(session, message.getPayload());
     }
 }

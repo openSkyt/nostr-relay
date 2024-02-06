@@ -11,11 +11,11 @@ import java.util.Optional;
  * Handles EVENT-data processing logic
  */
 @Component
-public class EventService implements NostrConsumer {
-    private final NostrPersistence persistence;
+public class EventController implements NostrConsumer {
+    private final EventService service;
 
-    public EventService(EventObserver observer, NostrPersistence persistence) {
-        this.persistence = persistence;
+    public EventController(EventObserver observer, EventService service) {
+        this.service = service;
 
         observer.subscribe(this);
     }
@@ -39,10 +39,10 @@ public class EventService implements NostrConsumer {
      * incoming EVENT-data
      */
     private void handleEvent_0(Event event) {
-        Optional<Event> optEventData = persistence.getMetaData(event.getPubkey());
+        Optional<Event> optEventData = service.getMetaData(event.getPubkey());
         // remove redundant data
-        optEventData.ifPresent(persistence::delete);
-        persistence.save(event);
+        optEventData.ifPresent(service::delete);
+        service.save(event);
     }
 
     /**
@@ -51,7 +51,9 @@ public class EventService implements NostrConsumer {
      * incoming EVENT-data
      */
     private void handleEvent_1(Event event) {
-        persistence.save(event);
+        if (!service.exists(event.getId())) {
+            service.save(event);
+        }
     }
 
     // overridden method from implemented NostrConsumer interface - invokes actual impl. defined in this class
