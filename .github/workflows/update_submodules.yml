@@ -1,0 +1,26 @@
+name: Update Submodules
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  update_submodules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+
+      - name: Update submodules
+        run: |
+          git submodule update --init --recursive
+          git submodule foreach git pull origin main
+          git add .
+          git commit -m "Automatically update submodules"
+          git push origin main
