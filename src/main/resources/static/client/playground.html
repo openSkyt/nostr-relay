@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>chat</title>
+    <script src="https://bitcoincore.tech/apps/bitcoinjs-ui/lib/bitcoinjs-lib.js"></script>
+    <script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
+    <script src="/nostr-lib.js"></script>
+    <script src="/socket-client.js"></script>
+    <script src="/nostr-client.js"></script>
+    <style>
+        body {
+            background-color: rgb(240, 234, 225);
+            font-family: monospace;
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        main {
+            color: #948a84;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p {
+            margin: 0;
+            line-height: inherit;
+            font: inherit;
+            display: inline;
+            margin-right: 2rem;
+        }
+
+        p,
+        code {
+            display: block;
+        }
+
+        p {
+            font-family: serif;
+            font-size: 1.32rem;
+            color: #222;
+        }
+
+        nav {
+            background-color: bisque;
+            padding: 1rem 1.3rem;
+        }
+
+        main,
+        footer {
+            padding: 1rem 1.5rem;
+        }
+
+        a {
+            margin-right: 1em;
+            cursor: pointer;
+            display: inline-block;
+            background-color: seashell;
+            margin: .2rem;
+            padding: .1rem .3rem;
+        }
+
+        a:hover,
+        .selected {
+            background-color: aquamarine;
+        }
+
+        #pink {
+            font-size: 300%;
+            color: pink;
+        }
+
+        *+h1 {
+            margin-left: 1rem;
+        }
+
+        article {
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <nav></nav>
+        <nav><a id="moar">moar</a>
+            <a id="reset">reset</a>
+        </nav>
+
+        <a id="all">all</a>
+        <span id="counter">–</span>
+    </header>
+
+    <main></main>
+
+    <footer>
+        <p id="pink">■</p>
+    </footer>
+
+    <script>
+        const NAV_LIMIT = 30;
+        let nav_limit = 30;
+        let current_tag = null;
+        let counter = 0; //number of events received and in memory
+
+        const conn = nostrClient('wss://relay.nostr.band/');
+        //const conn = nostrClient('wss://hipstr.cz/');
+
+        const tag2events = new Map();
+
+        const nav = document.querySelector('nav');
+        const section = document.querySelector('main');
+
+        initNav();
+        setTimeout(renderTags, 500);
+        setTimeout(renderTags, 1000);
+        setTimeout(renderTags, 1500);
+
+        conn.onOpen((event) => {
+            console.log(event);
+            conn.send(JSON.stringify(["REQ", "a", { "kinds": [1], "limit": 5000 }]))
+        });
+
+        conn.onEvent(handleEvent);
+
+        function counterUpdate() {
+            counter++;
+            document.querySelector('#counter').innerText = counter;
+        }
+
+        function handleEvent(event) {
+            counterUpdate();
+
+            const tags = event.tags.reduce((acc, [key, value, _]) => {
+                if (key.match(/^[pe]$|^proxy$/)) return acc;
+                if (key.length > 1) acc.push(key);
+                acc.push([key, value].join(":"));
+                return acc;
+            }, []);
+
+            tags.forEach(tag => {
+                const current = tag2events.get(tag) || [];
+
+                // TODO: this `[].concat(event)` should be done with a stack / linked list -- will always iterate from the beginning (newest first)
+                tag2events.set(tag, current.concat(event));
+
+                if (current_tag === tag) renderEvent(event);
+            });
+
+            if (current_tag === null) renderEvent(event);
+        }
+
+        function renderEvent(event) {
+            const root = document.createElement('article');
+
+            const time = document.createElement('h1');
+            time.innerText = new Date(event.created_at * 1000).toISOString();
+            root.append(time);
+
+            const heading = document.createElement('h2');
+            heading.innerText = event.pubkey;
+            root.append(heading);
+
+            const kind = document.createElement('h3');
+            kind.innerText = event.kind;
+            root.append(kind);
+
+            const json = document.createElement('code');
+            json.innerText = JSON.stringify(event.tags);
+            root.append(json);
+
+            const p = document.createElement('p');
+            p.innerText = event.content;
+            root.append(p);
+
+            section.prepend(root);
+        }
+
+        function renderTags() {
+            nav.innerText = "";
+
+            [...tag2events.entries()]
+                //.filter(([_, events]) => events.length > 1)
+                .sort((a, b) => b[1].length - a[1].length)
+                .slice(0, nav_limit)
+                .forEach(([tag, _]) => {
+
+                    const p = document.createElement('a');
+                    p.innerText = `${tag}`;
+                    nav.appendChild(p);
+                });
+
+        }
+
+        function initNav() {
+            document.querySelector('#all').addEventListener('click', () => {
+                current_tag = null;
+            });
+            document.querySelector('#moar').addEventListener('click', () => {
+                nav_limit *= 2;
+                renderTags();
+            });
+
+            document.querySelector('#reset').addEventListener('click', () => {
+                nav_limit = NAV_LIMIT;
+                renderTags();
+            });
+
+            nav.addEventListener('click', (event) => {
+                const target = event.target;
+
+                if (target.tagName !== 'A') return;
+
+                const previous = nav.querySelector('a.selected');
+
+                if (previous) previous.classList.remove('selected');
+
+                target.classList.add('selected');
+
+                section.innerText = "";
+
+                current_tag = target.innerText;
+
+                tag2events.get(current_tag).forEach(renderEvent);
+            });
+        }
+    </script>
+
+</body>
+
+</html>

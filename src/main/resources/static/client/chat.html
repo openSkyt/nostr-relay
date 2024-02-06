@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>chat</title>
+    <script src="https://bitcoincore.tech/apps/bitcoinjs-ui/lib/bitcoinjs-lib.js"></script>
+    <script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+
+        #login {
+            padding: 1.25rem;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            margin-right: 0.625rem;
+            cursor: pointer;
+            padding: 0.625rem;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 0.3125rem;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        label {
+            display: block;
+            margin: 0.625rem 0;
+            color: #555;
+        }
+
+        input {
+            padding: 0.625rem;
+            width: 100%;
+            box-sizing: border-box;
+            border: 0.0625rem solid #ccc;
+            border-radius: 0.3125rem;
+        }
+
+        section {
+            border-radius: 0.5rem;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid yellow;
+            overflow: hidden;
+
+        }
+
+        section span + span {
+            margin-left: 2rem;
+        }
+
+        section p {
+            padding: 1rem;
+        }
+
+        th a {
+            color: white;
+        }
+
+        section p:nth-child(even) {
+            background-color: white;
+            overflow: hidden;
+            border-radius: 1rem;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        #topBar {
+            padding: 0.5rem;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background-color: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #ccc;
+        }
+
+
+        #actionBar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f5f5f5;
+            padding-left: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid #ccc;
+        }
+
+        .actionBarTextField {
+            flex-grow: 1;
+            margin-right: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .actionBarTextField input {
+            flex-grow: 1;
+            padding: 0.75rem;
+            font-size: 1rem;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 0.5rem;
+            outline: none;
+        }
+
+        .submitButton {
+            margin-right: 2rem;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        #wrapper {
+            display: none;
+            grid-template-areas:
+            "chat contacts"
+            "chat contacts"
+            "chat contacts"
+            "actionBar actionBar";
+        }
+
+        #chat {
+            overflow: hidden;
+        }
+
+        p {
+            word-break: break-word;
+        }
+
+        dialog {
+            background: white;
+            border: none;
+            border-radius: 1rem;
+            padding: 3.5rem;
+        }
+
+        #userSettingsIcon:hover {
+            cursor: pointer;
+        }
+
+        #userSettingsIcon {
+            width: 2.5rem; height: 2.5rem;
+            border-radius: 1rem;
+        }
+    </style>
+
+</head>
+<body>
+<div id="login">
+    <button onclick="generateKeypair()">Generate keypair</button>
+    <label> Private key:
+        <input id="privateKey" value="4148b0040c190b1058d5e478d5406a237ebae15b8d22184dc5660c17232ce011">
+    </label>
+    <label> Relay address:
+        <input id="relay" value="wss://relay.nostr.band/">
+        <!-- wss://relay.nostr.band/  ||  ws://localhost:8080/ -->
+    </label>
+    <button onclick="logIn()">Login</button>
+</div>
+
+<div id="wrapper" hidden>
+    <div id="topBar">
+        <img id="userSettingsIcon" src="user-solid-1.png">
+    </div>
+
+    <div id="chat">
+    </div>
+
+    <div id="contacts">
+    </div>
+
+    <div id="actionBar">
+        <label class="actionBarTextField">
+            <input id="messageInput" placeholder="Type your message...">
+        </label>
+        <button onclick="sendMessage(1)" class="submitButton">
+        </button>
+    </div>
+
+</div>
+
+<div id="userSettingsModal" class="modal">
+
+    <dialog id="modal">
+        <label>Username: <input id="userName"></label>
+        <label>Bio: <input id="aboutSection"></label>
+        <label>Profile picture URL<input id="profilePicURL"></label>
+        <button onclick="sendMessage(0)">Submit</button>
+    </dialog>
+
+</div>
+
+<script>
+    const modal = document.getElementById("modal");
+    const userSettingsButton = document.getElementById("userSettingsIcon");
+
+    userSettingsButton.addEventListener("click", () => {
+        modal.showModal();
+    })
+
+
+    modal.addEventListener("click", e => {
+        const dialogDimensions = modal.getBoundingClientRect()
+        if (
+            e.clientX < dialogDimensions.left ||
+            e.clientX > dialogDimensions.right ||
+            e.clientY < dialogDimensions.top ||
+            e.clientY > dialogDimensions.bottom
+        ) {
+            modal.close()
+        }
+    })
+</script>
+
+<script>
+    let socket;
+
+    function logIn() {
+        document.getElementById('login').hidden = true;
+        document.getElementById('wrapper').style.display = 'grid';
+        const relay = document.getElementById("relay").value;
+        socket = new WebSocket(relay);
+
+        subscribe(socket);
+        fetchLoggedUsersMetadata(socket);
+    }
+
+    function generateKeypair() {
+        let keypair = bitcoinjs.ECPair.makeRandom();
+        let privateKey = keypair.privateKey.toString("hex");
+        let publicKey = keypair.publicKey.toString("hex").substring(2);
+        document.getElementById("privateKey").value = privateKey;
+        document.getElementById("publicKey").value = publicKey;
+    }
+
+
+    function subscribe(socket) {
+        const {schnorr} = nobleSecp256k1;
+        const currentPrivateKey = document.getElementById('privateKey').value;
+        let subId = bitcoinjs.ECPair.makeRandom().privateKey.toString("hex").substring(0, 16);
+        //let filter = {"kinds": [1]};
+        //let filter = {"kinds": [1], "authors": [schnorr.getPublicKey(currentPrivateKey)]}
+        const filter = {"kinds": [1], "limit": 10};
+
+        socket.addEventListener('message', async function (message) {
+            handleMessage(message);
+        });
+
+        socket.addEventListener('open', async function (e) {
+            console.log("connected to " + socket.url);
+
+            // Sending a subscription request
+            let subscription = ["REQ", subId, filter];
+            console.log('Subscription:', subscription);
+            socket.send(JSON.stringify(subscription));
+        });
+    }
+
+
+    const inputEl = document.getElementById("messageInput");
+
+    inputEl.addEventListener("keyup", manageEnter);
+
+    function manageEnter(evt) {
+        evt.preventDefault();
+        if (evt.keyCode === 13) {
+            sendMessage(1);
+        }
+    }
+
+    //if we receive EOSE, we change this to true, to start prepending the events that come after.
+    let endOfStoredEventsReached = false;
+    const savedUserData = new Map();
+
+
+    function renderContact(metadata) {
+        const contactsDiv = document.getElementById("contacts");
+
+        const contact = document.createElement("p");
+
+        contact.innerText = metadata.name;
+
+        if (metadata.picture) {
+            const avatar = document.createElement("img");
+            avatar.src = metadata.picture;
+            avatar.style.width = "32px";
+            avatar.style.height = "32px";
+            contact.appendChild(avatar);
+        }
+
+        contactsDiv.appendChild(contact);
+    }
+
+    function handleMessage(message) {
+        let [type, subId, event] = JSON.parse(message.data); // do not remove the subid, it will not work without!
+
+        // Logging the message and content
+
+        if (type === "EOSE") {
+            console.log(type);
+            endOfStoredEventsReached = true; //we have received EOSE, start prepending now.
+            fetchMetadata(socket);
+        }
+
+        if (type === "EVENT" && event.kind === 0) {
+            // [EVENT, idsub, {kind: 0, pubkey: pubkey, content: content}]
+            const metadata = JSON.parse(event.content);
+            savedUserData.set(event.pubkey, metadata);
+
+            renderContact(metadata);
+
+            if (ongoingUserRequests.has(event.pubkey)) {
+                ongoingUserRequests.get(event.pubkey).forEach(el => {
+                    el.textContent = metadata.name;
+                });
+                ongoingUserRequests.delete(event.pubkey);
+            }
+        }
+
+        if (type === "EVENT" && event.kind === 1) {
+            console.log('message:', event);
+
+            let chatDiv = document.getElementById("chat");
+
+            // Create a new table for each event
+            let newTable = document.createElement("section");
+
+            // Create a new row for user data
+            let userRow = document.createElement("p");
+            let userLabelCell = document.createElement("span");
+            userLabelCell.textContent = "pubkey";
+            let userDataCell = document.createElement("span");
+
+            if (savedUserData.has(event.pubkey)) {
+                userDataCell.textContent = savedUserData.get(event.pubkey).name; //data
+            } else {
+                getUserInfo(event.pubkey, userDataCell)
+            }
+            userRow.appendChild(userLabelCell);
+            userRow.appendChild(userDataCell);
+
+            // Create a new row for message data
+            let messageRow = document.createElement("p");
+            let messageLabelCell = document.createElement("span");
+            messageLabelCell.textContent = "message";
+
+            const image_url = event.content.match(/(https?:\/\/.*\.(?:png|jpg|gif|webp))/ig);
+
+            if (image_url && image_url.length) {
+                image_url.forEach((url) => {
+                    let messageDataCell = document.createElement("img");
+                    messageDataCell.src = url;
+                    messageRow.appendChild(messageDataCell);
+                });
+            } else {
+                let messageDataCell = document.createElement("span");
+                messageDataCell.textContent = event.content; //data
+                messageRow.appendChild(messageDataCell);
+            }
+
+            // Create a new row for timestamp data
+            let timestampRow = document.createElement("p");
+            let timestampLabelCell = document.createElement("span");
+            timestampLabelCell.textContent = "timestamp";
+            let timestampDataCell = document.createElement("span");
+            timestampDataCell.textContent = new Date(event.created_at * 1000); //data
+            timestampRow.appendChild(timestampLabelCell);
+            timestampRow.appendChild(timestampDataCell);
+
+            // Append rows to the new table
+            newTable.appendChild(userRow);
+            newTable.appendChild(messageRow);
+            newTable.appendChild(timestampRow);
+
+            // Append the new table to the chat div
+            // If we have reached EOSE, start prepending to add new messages to the top.
+            if (!endOfStoredEventsReached) {
+                chatDiv.append(newTable);
+            } else {
+                chatDiv.prepend(newTable);
+            }
+        }
+    }
+
+    function sendMessage(kind) {
+        // Importing necessary modules
+
+        let {schnorr} = nobleSecp256k1;
+        let sha256 = bitcoinjs.crypto.sha256;
+
+        // Retrieving values from input fields
+        let privKey = document.getElementById("privateKey").value;
+        let pubKey = schnorr.getPublicKey(privKey);
+        let relay = document.getElementById("relay").value;
+
+        let socket = new WebSocket(relay);
+
+        // Handling incoming messages
+        socket.addEventListener('message', async function (message) {
+            // Parsing the incoming message
+            let [type, subId, event] = JSON.parse(message.data); // do not remove the type or subid, it will not work without!
+            let {content} = event || {};
+
+            // Logging the message and content
+            if (type === "EVENT") {
+                console.log('message:', event);
+                console.log('content:', content);
+            }
+            if (type === "EOSE") {
+                console.log(type);
+            }
+
+
+            // Uncomment the following lines if decryption is required
+            // if (kind === 4) {
+            //    content = await decrypt(privKey, event.pubkey, content)
+            // }
+        });
+
+        // Handling the WebSocket connection
+        socket.addEventListener('open', async function (e) {
+            console.log("connected to " + relay);
+
+            // Creating and sending a signed event
+
+            let newEvent;
+
+            if (kind === 1) {
+
+                newEvent = {
+                    "content": document.getElementById("messageInput").value,
+                    "created_at": Math.floor(Date.now() / 1000),
+                    "kind": 1,
+                    "tags": [],
+                    "pubkey": pubKey,
+                };
+            }
+
+            if (kind === 0) {
+
+                let userName = document.getElementById("userName").value;
+                let aboutSection = document.getElementById("aboutSection").value;
+                let profilePicURL = document.getElementById("profilePicURL").value
+
+                let content = {
+                    "name": userName,
+                    "about": aboutSection,
+                    "picture": profilePicURL
+                }
+
+                newEvent = {
+                    "content": JSON.stringify(content),
+                    "created_at": Math.floor(Date.now() / 1000),
+                    "kind": 0,
+                    "tags": [],
+                    "pubkey": pubKey
+                };
+            }
+
+            let signedEvent = await getSignedEvent(newEvent, privKey);
+            console.log('signedEvent:', signedEvent);
+            socket.send(JSON.stringify(["EVENT", signedEvent]));
+            document.getElementById('messageInput').value = "";
+        });
+
+        // Function to get a signed event
+        async function getSignedEvent(event, privateKey) {
+            let eventData = JSON.stringify([
+                0,                      // Reserved for future use
+                event['pubkey'],        // The sender's public key
+                event['created_at'],    // Unix timestamp
+                event['kind'],          // Message “kind” or type
+                event['tags'],          // Tags identify replies/recipients
+                event['content']        // Your note contents
+            ]);
+            event.id = sha256(eventData).toString('hex');
+            event.sig = await schnorr.sign(event.id, privateKey);
+            return event;
+        }
+    }
+
+    const ongoingUserRequests = new Map();
+
+    function getUserInfo(pubKey, el) {
+
+        if (ongoingUserRequests.has(pubKey)) {
+            ongoingUserRequests.get(pubKey).push(el);
+        } else {
+            ongoingUserRequests.set(pubKey, [el]);
+        }
+    }
+
+    function fetchMetadata(socket) {
+        let subId = bitcoinjs.ECPair.makeRandom().privateKey.toString("hex").substring(0, 16);
+        let filter = {"authors": [...ongoingUserRequests.keys()], "kinds": [0]};
+
+        console.log("fetchMetadata called", ["REQ", subId, filter])
+
+        socket.send(JSON.stringify(["REQ", subId, filter]));
+
+        fetchMetadata = () => {
+            console.log("fetchMetadata called again")
+        };
+    }
+
+
+    function fetchLoggedUsersMetadata(socket) {
+        let subId = bitcoinjs.ECPair.makeRandom().privateKey.toString("hex").substring(0, 16);
+        let {schnorr} = nobleSecp256k1;
+        let pubkey = schnorr.getPublicKey(document.getElementById("privateKey").value);
+        let filter = {"authors": [pubkey], "kinds": [0]};
+
+
+        socket.addEventListener('open', async function (e) {
+        socket.send(JSON.stringify(["REQ", subId, filter]));
+
+
+            socket.addEventListener('message', async function (message) {
+                // Parsing the incoming message
+                let [type, subId, event] = JSON.parse(message.data); // do not remove the type or subid, it will not work without!
+
+                // Logging the message and content
+                if (type === "EVENT" && event.kind === 0 && event.pubkey === pubkey) {
+                    console.log('message:', event);
+                    let eventData = JSON.parse(JSON.stringify(event));
+                    let content = JSON.parse(eventData.content)
+                    document.getElementById("userName").value = content.name;
+                    document.getElementById("profilePicURL").value = content.picture;
+                    document.getElementById("aboutSection").value = content.about;
+
+                    if (content.picture !== "") {
+                        document.getElementById("userSettingsIcon").src = content.picture
+                    }
+                }
+            });
+        });
+    }
+
+
+</script>
+</body>
+</html>
