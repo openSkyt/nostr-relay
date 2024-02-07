@@ -10,6 +10,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * Web-socket handler, logs incoming messages and tracks active sessions, delegates messages to NostrMessageHandler.handleMessage();
@@ -17,6 +18,8 @@ import java.util.*;
 @Component
 @RequiredArgsConstructor
 public class NostrWebSocketHandler extends TextWebSocketHandler {
+
+    Logger logger = Logger.getLogger(NostrWebSocketHandler.class.getName());
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
     private final Router router;
@@ -27,7 +30,8 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
 
         sessions.add(session);
-        System.out.println("dev: New session opened. Current session size: " + sessions.size());
+
+        logger.info("dev: New session opened. Current session size: " + sessions.size());
     }
 
     @Override
@@ -36,7 +40,7 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
 
         observer.notifyConsumers(session);
         sessions.remove(session);
-        System.out.println("dev: WebSocket session closed with reason: " + status.getReason());
+        logger.info("dev: WebSocket session closed with reason: " + status.getReason());
     }
 
     @Override
