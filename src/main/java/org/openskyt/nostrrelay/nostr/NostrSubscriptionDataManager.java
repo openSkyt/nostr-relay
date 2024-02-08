@@ -1,9 +1,12 @@
 package org.openskyt.nostrrelay.nostr;
 
+import org.openskyt.nostrrelay.BIP340_Schnorr.EventSigValidator;
 import org.openskyt.nostrrelay.dto.CloseData;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.openskyt.nostrrelay.model.NostrConsumer;
 import org.openskyt.nostrrelay.observers.SessionObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -14,6 +17,7 @@ import java.util.Set;
 public class NostrSubscriptionDataManager implements NostrConsumer {
 
     private final Set<Subscription> subscriptions = new HashSet<>();
+    private final Logger logger = LoggerFactory.getLogger(NostrSubscriptionDataManager.class);
 
     public NostrSubscriptionDataManager(SessionObserver observer) {
         observer.subscribe(this);
@@ -21,7 +25,7 @@ public class NostrSubscriptionDataManager implements NostrConsumer {
 
     public void addSubscription(Subscription subscription) {
         subscriptions.add(subscription);
-        System.out.println("new subscription created: " + subscription.subscription_id());
+        logger.info("new subscription created: " + subscription.subscription_id());
     }
 
     public void closeSub(CloseData closeData) {
@@ -35,7 +39,7 @@ public class NostrSubscriptionDataManager implements NostrConsumer {
 
     public void removeSubscription(WebSocketSession session) {
         subscriptions.removeIf(sub -> sub.session().equals(session));
-        System.out.println("current sub size: " + subscriptions.size());
+        logger.info("current sub size: " + subscriptions.size());
     }
 
     public Set<Subscription> getAllSubscriptions() {

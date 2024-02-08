@@ -1,8 +1,11 @@
 package org.openskyt.nostrrelay.nostr;
 
+import org.openskyt.nostrrelay.BIP340_Schnorr.EventSigValidator;
 import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.model.NostrConsumer;
 import org.openskyt.nostrrelay.observers.EventObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
@@ -13,6 +16,7 @@ import java.util.Optional;
 @Component
 public class EventService implements NostrConsumer {
     private final NostrPersistence persistence;
+    private final Logger logger = LoggerFactory.getLogger(EventSigValidator.class);
 
     public EventService(EventObserver observer, NostrPersistence persistence) {
         this.persistence = persistence;
@@ -29,7 +33,7 @@ public class EventService implements NostrConsumer {
         switch (event.getKind()) {
             case 0      : handleEvent_0(event); break;
             case 1      : handleEvent_1(event); break;
-            default     : System.out.println("ignoring event: " + event);
+            default     : logger.warn("ignoring event: " + event);
         }
     }
 

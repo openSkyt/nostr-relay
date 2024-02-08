@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.repository.EventRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -23,6 +25,7 @@ public class NostrPersistence {
 
     private final EventRepository repo;
     private final MongoTemplate mongoTemplate;
+    private final Logger logger = LoggerFactory.getLogger(NostrPersistence.class);
 
     public void save(Event event) {
         repo.save(event);
@@ -103,7 +106,7 @@ public class NostrPersistence {
     private void removeDocumentsWithExpiredTimestamp() {
         Query query = Query.query(Criteria.where("expiration").exists(true));
         List<Event> expiringEvents = mongoTemplate.find(query, Event.class);
-        System.out.println("expiring events count: " + expiringEvents.size());
+        logger.info("expiring events count: " + expiringEvents.size());
         for (Event event : expiringEvents) {
             if (event.getExpiration() != null && event.getExpiration() <= (System.currentTimeMillis() / 1000L)) {
                 removeDocument(event.getId());

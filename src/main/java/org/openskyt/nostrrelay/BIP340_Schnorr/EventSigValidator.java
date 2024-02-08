@@ -2,6 +2,8 @@ package org.openskyt.nostrrelay.BIP340_Schnorr;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.openskyt.nostrrelay.model.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
@@ -13,6 +15,7 @@ import java.util.Collections;
 
 @Component
 public class EventSigValidator {
+    private final Logger logger = LoggerFactory.getLogger(EventSigValidator.class);
 
     public boolean verifyEvent(Event event) {
         try {
@@ -37,7 +40,7 @@ public class EventSigValidator {
                             Util.hexToBytes(event.getSig()));
 
         } catch (Exception e) {
-            System.out.println("cant verify event");
+            logger.error("cant verify event signature");
         }
         return false;
     }
@@ -45,7 +48,7 @@ public class EventSigValidator {
     //https://code.samourai.io/samouraidev/BIP340_Schnorr
     private boolean verify(byte[] id, byte[] pubkey, byte[] sig) throws Exception {
         if (id.length != 32 || pubkey.length != 32 || sig.length != 64) {
-            System.out.println("ID or pubkey or sig is not valid");
+            logger.error("ID or pubkey or sig is not valid");
             return false;
         }
 
