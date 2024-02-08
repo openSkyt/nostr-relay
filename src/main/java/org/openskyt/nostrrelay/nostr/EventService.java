@@ -53,16 +53,23 @@ public class EventService {
         reqFilterSet.forEach(request -> {
             Criteria criteria = new Criteria();
 
-            if (request.getAuthors() != null && !request.getAuthors().isEmpty()) {
-                criteria.and("pubkey").in(request.getAuthors());
-            }
-
             if (request.getKinds() != null && !request.getKinds().isEmpty()) {
                 criteria.and("kind").in(request.getKinds());
             }
 
+            if (request.getAuthors() != null && !request.getAuthors().isEmpty()) {
+                criteria.and("pubkey").in(request.getAuthors());
+            }
+
             if (request.getIds() != null && !request.getIds().isEmpty()) {
                 criteria.and("id").in(request.getIds());
+            }
+
+            if (request.getSince() != null) {
+                criteria.and("created_at").gte(request.getSince());
+            }
+            if (request.getUntil() != null) {
+                criteria.and("created_at").lte(request.getUntil());
             }
 
             if (request.getE() != null && !request.getE().isEmpty()) {
@@ -80,14 +87,7 @@ public class EventService {
                         Criteria.where("0").is("t").and("1").in(request.getT())
                 );
             }
-
-            if (request.getSince() != null) {
-                criteria.and("created_at").gte(request.getSince());
-            }
-            if (request.getUntil() != null) {
-                criteria.and("created_at").lte(request.getUntil());
-            }
-
+            
             if (request.getLimit() != null) {
                 Query limitedQuery = new Query(criteria).limit(request.getLimit());
                 events.addAll(mongoTemplate.find(limitedQuery, Event.class));

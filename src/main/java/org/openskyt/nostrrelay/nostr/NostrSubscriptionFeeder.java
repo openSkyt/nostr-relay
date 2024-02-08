@@ -72,14 +72,14 @@ public class NostrSubscriptionFeeder implements NostrConsumer {
 
         for (ReqFilter r : reqFilterSet) {
             if (
-                    (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(event.getPubkey()))
-                    && (r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(event.getKind()))
+                    (r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(event.getKind()))
+                    && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(event.getPubkey()))
                     && (r.getIds() == null || r.getIds().isEmpty() || r.getIds().contains(event.getId()))
                     && (r.getSince() == null || r.getSince() <= event.getCreated_at())
                     && (r.getUntil() == null || r.getUntil() >= event.getCreated_at())
-                    && (r.getE() == null || r.getE().isEmpty() || containsAny(event.getTags(), "e", r.getE()))
-                    && (r.getP() == null || r.getP().isEmpty() || containsAny(event.getTags(), "p", r.getP()))
-                    && (r.getT() == null || r.getT().isEmpty() || containsAny(event.getTags(), "t", r.getT()))) {
+                    && (r.getE() == null || r.getE().isEmpty() || containsTags(event.getTags(), "e", r.getE()))
+                    && (r.getP() == null || r.getP().isEmpty() || containsTags(event.getTags(), "p", r.getP()))
+                    && (r.getT() == null || r.getT().isEmpty() || containsTags(event.getTags(), "t", r.getT()))) {
                 return true;
             }
         }
@@ -87,22 +87,22 @@ public class NostrSubscriptionFeeder implements NostrConsumer {
     }
 
     /**
-     * Checks if the given list of tags contains any tag with the specified key and values.
+     * Checks if the given list of tags contains all tags with the specified key and values.
      * @param tags     List of tags to check
      * @param key      Tag key
      * @param values   Tag values to match
      * @return true if the list contains a tag with the specified key and values, false otherwise
      */
-    private boolean containsAny(String[][] tags, String key, Set<String> values) {
+    private boolean containsTags(String[][] tags, String key, Set<String> values) {
         if (tags == null || tags.length == 0 || key == null || key.isEmpty() || values == null || values.isEmpty()) {
             return true; // If any of the parameters are null or empty, consider it a match
         }
         for (String[] tag : tags) {
-            if (tag.length >= 2 && key.equals(tag[0]) && values.contains(tag[1])) {
-                return true;
+            if (tag.length >= 2 && !key.equals(tag[0]) && values.contains(tag[1])) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     /**
