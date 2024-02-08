@@ -1,4 +1,4 @@
-package org.openskyt.nostrrelay.nostr;
+package org.openskyt.nostrrelay.service;
 
 import lombok.RequiredArgsConstructor;
 import org.openskyt.nostrrelay.dto.ReqFilter;

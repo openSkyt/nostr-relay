@@ -1,7 +1,8 @@
-package org.openskyt.nostrrelay.nostr;
+package org.openskyt.nostrrelay.controller;
 
 import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.model.NostrConsumer;
+import org.openskyt.nostrrelay.service.EventService;
 import org.openskyt.nostrrelay.observers.EventObserver;
 import org.springframework.stereotype.Component;
 
@@ -12,10 +13,12 @@ import java.util.Optional;
  */
 @Component
 public class EventController implements NostrConsumer {
-    private final EventService service;
+    private final EventService eventService;
+    private final SubscriptionController subscriptionController;
 
-    public EventController(EventObserver observer, EventService service) {
-        this.service = service;
+    public EventController(EventObserver observer, EventService eventService, SubscriptionController subscriptionController) {
+        this.eventService = eventService;
+        this.subscriptionController = subscriptionController;
 
         observer.subscribe(this);
     }
@@ -39,10 +42,11 @@ public class EventController implements NostrConsumer {
      * incoming EVENT-data
      */
     private void handleEvent_0(Event event) {
-        Optional<Event> optEventData = service.getMetaData(event.getPubkey());
+        Optional<Event> optEventData = eventService.getMetaData(event.getPubkey());
         // remove redundant data
-        optEventData.ifPresent(service::delete);
-        service.save(event);
+        optEventData.ifPresent(eventService::delete);
+        eventService.save(event);
+        subscriptionController.handleNewEvent(event);
     }
 
     /**
@@ -51,8 +55,8 @@ public class EventController implements NostrConsumer {
      * incoming EVENT-data
      */
     private void handleEvent_1(Event event) {
-        if (!service.exists(event.getId())) {
-            service.save(event);
+        if (!eventService.exists(event.getId())) {
+            eventService.save(event);
         }
     }
 

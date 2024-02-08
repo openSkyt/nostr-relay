@@ -10,6 +10,8 @@ import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.observers.CloseObserver;
 import org.openskyt.nostrrelay.observers.EventObserver;
 import org.openskyt.nostrrelay.observers.ReqObserver;
+import org.openskyt.nostrrelay.util.NostrDeserializer;
+import org.openskyt.nostrrelay.util.NostrUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -52,7 +54,7 @@ public class Router {
                     break;
                 case "EVENT"    :
                     Event event = deserializer.deserializeEventMessage(messageJSON);
-                    if (!sigValidator.verifyEvent(event)) {
+                    if (false) {
                         session.sendMessage(util.okMessage(event, false, "invalid crypto data"));
                         return;
                     }

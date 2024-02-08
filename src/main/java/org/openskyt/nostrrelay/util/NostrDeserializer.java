@@ -1,10 +1,11 @@
-package org.openskyt.nostrrelay.nostr;
+package org.openskyt.nostrrelay.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.openskyt.nostrrelay.dto.*;
 import org.openskyt.nostrrelay.model.Event;
+import org.openskyt.nostrrelay.util.NostrUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
