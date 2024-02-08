@@ -1,0 +1,3 @@
+[submodule "client"]
+	path = src/main/resources/static/client
+	url = https://github.com/openSkyt/nostr-client
