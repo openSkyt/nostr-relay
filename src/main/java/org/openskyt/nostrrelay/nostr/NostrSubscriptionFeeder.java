@@ -18,17 +18,17 @@ import java.util.Set;
 public class NostrSubscriptionFeeder implements NostrConsumer {
 
     private final EventService persistence;
-    private final NostrSubscriptionDataManager subscriptionDataManager;
+    private final SubscriptionManager subscriptionManager;
     private final NostrUtil util;
 
-    public NostrSubscriptionFeeder(EventService persistence,
-                                   NostrSubscriptionDataManager subscriptionDataManager,
+    public NostrSubscriptionFeeder(EventService service,
+                                   SubscriptionManager subscriptionManager,
                                    NostrUtil util,
                                    EventObserver eventObserver,
                                    ReqObserver reqObserver) {
 
-        this.persistence = persistence;
-        this.subscriptionDataManager = subscriptionDataManager;
+        this.persistence = service;
+        this.subscriptionManager = subscriptionManager;
         this.util = util;
         eventObserver.subscribe(this);
         reqObserver.subscribe(this);
@@ -52,7 +52,7 @@ public class NostrSubscriptionFeeder implements NostrConsumer {
      * @param event examined EVENT-data to filter
      */
     public void handleNewEvent(Event event) {
-        for (Subscription subscription : subscriptionDataManager.getAllSubscriptions()) {
+        for (Subscription subscription : subscriptionManager.getAllSubscriptions()) {
             if (doesMatch(event, subscription.filters())) {
                 sendEvents(subscription, Set.of(event));
             }
@@ -71,8 +71,9 @@ public class NostrSubscriptionFeeder implements NostrConsumer {
         }
 
         for (ReqFilter r : reqFilterSet) {
-            if ((r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(event.getKind()))
-                    && (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(event.getPubkey()))
+            if (
+                    (r.getAuthors() == null || r.getAuthors().isEmpty() || r.getAuthors().contains(event.getPubkey()))
+                    && (r.getKinds() == null || r.getKinds().isEmpty() || r.getKinds().contains(event.getKind()))
                     && (r.getIds() == null || r.getIds().isEmpty() || r.getIds().contains(event.getId()))
                     && (r.getSince() == null || r.getSince() <= event.getCreated_at())
                     && (r.getUntil() == null || r.getUntil() >= event.getCreated_at())
