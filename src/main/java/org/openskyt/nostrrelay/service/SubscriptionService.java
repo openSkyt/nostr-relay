@@ -9,11 +9,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-public class SubscriptionManager {
+public class SubscriptionService {
 
     private final Set<Subscription> activeSubscriptions = new HashSet<>();
-
-
 
     public Set<Subscription> getAllSubscriptions() {
         return activeSubscriptions;

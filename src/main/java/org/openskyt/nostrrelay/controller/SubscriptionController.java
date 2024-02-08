@@ -7,7 +7,7 @@ import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.model.NostrConsumer;
 import org.openskyt.nostrrelay.observers.EventObserver;
 import org.openskyt.nostrrelay.service.EventService;
-import org.openskyt.nostrrelay.service.SubscriptionManager;
+import org.openskyt.nostrrelay.service.SubscriptionService;
 import org.openskyt.nostrrelay.util.NostrUtil;
 import org.openskyt.nostrrelay.observers.CloseObserver;
 import org.openskyt.nostrrelay.observers.ReqObserver;
@@ -21,11 +21,11 @@ import java.util.Set;
 @Component
 public class SubscriptionController implements NostrConsumer {
 
-    private final SubscriptionManager subscriptionManager;
+    private final SubscriptionService subscriptionService;
     private final EventService eventService;
     private final NostrUtil util;
 
-    public SubscriptionController(SubscriptionManager subscriptionManager,
+    public SubscriptionController(SubscriptionService subscriptionService,
                                   EventService eventService,
                                   NostrUtil util,
                                   ReqObserver reqObserver,
@@ -33,7 +33,7 @@ public class SubscriptionController implements NostrConsumer {
                                   SessionObserver sessionObserver,
                                   EventObserver eventObserver) {
 
-        this.subscriptionManager = subscriptionManager;
+        this.subscriptionService = subscriptionService;
         this.eventService = eventService;
         this.util = util;
         reqObserver.subscribe(this);
@@ -45,14 +45,14 @@ public class SubscriptionController implements NostrConsumer {
     @Override
     public void handle(Object o) {
         if (o instanceof Subscription) {
-            subscriptionManager.createNewSubscription((Subscription) o);
+            subscriptionService.createNewSubscription((Subscription) o);
             sendPersistedData((Subscription) o);
 
         } else if (o instanceof CloseData) {
-            subscriptionManager.removeSubscription((CloseData) o);
+            subscriptionService.removeSubscription((CloseData) o);
 
         } else if (o instanceof WebSocketSession) {
-            subscriptionManager.removeSubscription((WebSocketSession) o);
+            subscriptionService.removeSubscription((WebSocketSession) o);
 
         } else if (o instanceof  Event) {
             handleNewEvent((Event) o);
@@ -77,7 +77,7 @@ public class SubscriptionController implements NostrConsumer {
      * @param event examined EVENT-data to filter
      */
     public void handleNewEvent(Event event) {
-        for (Subscription subscription : subscriptionManager.getAllSubscriptions()) {
+        for (Subscription subscription : subscriptionService.getAllSubscriptions()) {
             if (doesMatch(event, subscription.filters())) {
                 sendEvents(subscription, Set.of(event));
             }
