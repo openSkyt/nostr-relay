@@ -14,11 +14,9 @@ import java.util.Optional;
 @Component
 public class EventController implements NostrConsumer {
     private final EventService eventService;
-    private final SubscriptionController subscriptionController;
 
-    public EventController(EventObserver observer, EventService eventService, SubscriptionController subscriptionController) {
+    public EventController(EventObserver observer, EventService eventService) {
         this.eventService = eventService;
-        this.subscriptionController = subscriptionController;
 
         observer.subscribe(this);
     }
@@ -46,7 +44,6 @@ public class EventController implements NostrConsumer {
         // remove redundant data
         optEventData.ifPresent(eventService::delete);
         eventService.save(event);
-        subscriptionController.handleNewEvent(event);
     }
 
     /**

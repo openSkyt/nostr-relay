@@ -5,6 +5,7 @@ import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.model.NostrConsumer;
+import org.openskyt.nostrrelay.observers.EventObserver;
 import org.openskyt.nostrrelay.service.EventService;
 import org.openskyt.nostrrelay.service.SubscriptionManager;
 import org.openskyt.nostrrelay.util.NostrUtil;
@@ -29,7 +30,8 @@ public class SubscriptionController implements NostrConsumer {
                                   NostrUtil util,
                                   ReqObserver reqObserver,
                                   CloseObserver closeObserver,
-                                  SessionObserver sessionObserver) {
+                                  SessionObserver sessionObserver,
+                                  EventObserver eventObserver) {
 
         this.subscriptionManager = subscriptionManager;
         this.eventService = eventService;
@@ -37,6 +39,7 @@ public class SubscriptionController implements NostrConsumer {
         reqObserver.subscribe(this);
         closeObserver.subscribe(this);
         sessionObserver.subscribe(this);
+        eventObserver.subscribe(this);
     }
 
     @Override
@@ -44,10 +47,15 @@ public class SubscriptionController implements NostrConsumer {
         if (o instanceof Subscription) {
             subscriptionManager.createNewSubscription((Subscription) o);
             sendPersistedData((Subscription) o);
+
         } else if (o instanceof CloseData) {
             subscriptionManager.removeSubscription((CloseData) o);
+
         } else if (o instanceof WebSocketSession) {
             subscriptionManager.removeSubscription((WebSocketSession) o);
+
+        } else if (o instanceof  Event) {
+            handleNewEvent((Event) o);
         }
     }
 
