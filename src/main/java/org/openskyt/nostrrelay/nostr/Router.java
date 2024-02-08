@@ -63,7 +63,7 @@ public class Router {
                             return;
                         }
                         sendMessageSafely(session, util.okMessage(event, true, ""));
-                        //eventObserver.notifyConsumers(event);
+                        eventObserver.notifyConsumers(event);
                         break;
                     default:
                         sendMessageSafely(session, util.noticeMessage("Invalid NOSTR message"));
