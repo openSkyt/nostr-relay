@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import org.openskyt.nostrrelay.dto.*;
 import org.openskyt.nostrrelay.model.Event;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +21,7 @@ public class NostrDeserializer {
 
     private final ObjectMapper mapper = new ObjectMapper();
     private final NostrUtil util = new NostrUtil();
+    private final Logger logger = LoggerFactory.getLogger(NostrDeserializer.class);
 
     /**
      * Deserializes incoming EVENT-message into EVENT-data object, adds session info. (uses sub method deserializeEvent())
@@ -36,7 +38,7 @@ public class NostrDeserializer {
                 return deserializeEvent(mapper.writeValueAsString(messageData[1]));
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            logger.warn("Failed to deserialize EVENT message", e);
         }
         return null;
     }
@@ -63,7 +65,7 @@ public class NostrDeserializer {
                 return reqFilterSet;
             }
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            logger.warn("Failed to deserialize REQ message", e);
         }
         return null;
     }
@@ -80,10 +82,11 @@ public class NostrDeserializer {
     public CloseData deserializeCloseMessage(WebSocketSession session, String messageJSON) {
         try {
             Object[] message = mapper.readValue(messageJSON, Object[].class);
-            return  new CloseData(session, message[1].toString());
+            return new CloseData(session, message[1].toString());
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            logger.warn("Failed to deserialize CLOSE message", e);
         }
+        return null; //todo check upper methods
     }
 
     /**
@@ -97,10 +100,11 @@ public class NostrDeserializer {
         Event event;
         try {
             event = mapper.readValue(eventJSON, Event.class);
+            return event;
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            logger.warn("Failed to deserialize EVENT message", e);
+            return null; //todo check upper methods
         }
-        return event;
     }
 
     /**
@@ -114,7 +118,8 @@ public class NostrDeserializer {
         try {
             return mapper.readValue(reqJSON, ReqFilter.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            logger.warn("Failed to deserialize REQ message", e);
+            return null;  //todo check upper methods
         }
     }
 }

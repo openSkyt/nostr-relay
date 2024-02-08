@@ -21,26 +21,16 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 public class NostrWebSocketHandler extends TextWebSocketHandler {
-
-    //private final Logger logger = Logger.getLogger(NostrWebSocketHandler.class.getName());
-    private final Logger logger = LoggerFactory.getLogger(NostrWebSocketHandler.class);
-
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
     private final Router router;
     private final SessionObserver observer;
-
+    private final Logger logger = LoggerFactory.getLogger(NostrWebSocketHandler.class);
 
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
 
         sessions.add(session);
-
         logger.info("INFO dev: New session opened. Current session size: " + sessions.size());
-        logger.debug("DEBUG dev: New session opened. Current session size: " + sessions.size());
-        logger.warn("WARNING dev: New session opened. Current session size: " + sessions.size());
-        logger.error("ERROR dev: New session opened. Current session size: " + sessions.size());
-        logger.trace("TRACE dev: New session opened. Current session size: " + sessions.size());
-        logger.isWarnEnabled();
     }
 
     @Override
