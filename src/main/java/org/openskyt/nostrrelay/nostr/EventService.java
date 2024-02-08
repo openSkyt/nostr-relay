@@ -87,7 +87,7 @@ public class EventService {
                         Criteria.where("0").is("t").and("1").in(request.getT())
                 );
             }
-            
+
             if (request.getLimit() != null) {
                 Query limitedQuery = new Query(criteria).limit(request.getLimit());
                 events.addAll(mongoTemplate.find(limitedQuery, Event.class));
