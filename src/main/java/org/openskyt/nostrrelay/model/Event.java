@@ -14,6 +14,7 @@ import java.util.Date;
 @AllArgsConstructor
 @Document
 public class Event {
+    
     @Id
     private String id;
     private String pubkey;
@@ -22,16 +23,15 @@ public class Event {
     private String[][] tags;
     private String content;
     private String sig;
+    
     @JsonIgnore
     @Indexed(expireAfterSeconds = 0)
     private Date expirationTime;
+    @JsonIgnore
+    private Integer committedPowLevel;
 
-    public void setExpirationTimeIfExists() {
-        this.expirationTime = getExpirationValue(tags);
-    }
-
-    public Event(String id, String pubkey, long created_at, int kind, String[][] tags, String content, String sig) {//TODO remove this constructor is used only for testing
-
+    // TODO - only for testing - delete 
+    public Event(String id, String pubkey, long created_at, int kind, String[][] tags, String content, String sig) {
         this.id = id;
         this.pubkey = pubkey;
         this.created_at = created_at;
@@ -39,15 +39,18 @@ public class Event {
         this.tags = tags;
         this.content = content;
         this.sig = sig;
+
+        setExaminedValues();
     }
 
-    private Date getExpirationValue(String[][] tags) {
-        for (String[] tag : tags) {
-            if (tag.length > 1 && "expiration".equals(tag[0])) {
-                System.out.println();
-                return new Date(Long.parseLong(tag[1]) * 1000);
+    public void setExaminedValues() {
+        for (String[] tag : this.tags) {
+            if (tag.length == 2 && "expiration".equals(tag[0])) {
+                this.expiration = Long.parseLong(tag[1]);
+            }
+            if (tag.length == 3 && "nonce".equals(tag[0])) {
+                this.committedPowLevel = Integer.parseInt(tag[2]);
             }
         }
-        return null;
     }
 }

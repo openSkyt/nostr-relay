@@ -13,8 +13,6 @@ public class SubscriptionManager {
 
     private final Set<Subscription> activeSubscriptions = new HashSet<>();
 
-
-
     public Set<Subscription> getAllSubscriptions() {
         return activeSubscriptions;
     }

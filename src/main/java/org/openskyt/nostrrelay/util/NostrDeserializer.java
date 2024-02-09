@@ -98,6 +98,7 @@ public class NostrDeserializer {
         Event event;
         try {
             event = mapper.readValue(eventJSON, Event.class);
+            event.setExaminedValues();
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

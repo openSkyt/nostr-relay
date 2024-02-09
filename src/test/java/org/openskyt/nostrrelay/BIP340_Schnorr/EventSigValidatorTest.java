@@ -16,7 +16,7 @@ class EventSigValidatorTest {
 
     @Test
     void verifyEvent() {
-        Assertions.assertTrue(eventSigValidator.verifyEvent(new Event("2786e0e7179f3a4eec632df6595b20c8ce7d146fcd201194c562f1ce7df7513d",
+        Assertions.assertTrue(eventSigValidator.validateSignature(new Event("2786e0e7179f3a4eec632df6595b20c8ce7d146fcd201194c562f1ce7df7513d",
                 "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
                 1705579214,
                 1,
@@ -26,7 +26,7 @@ class EventSigValidatorTest {
     }
     @Test
     void verifyEventBadInput() {
-        Assertions.assertFalse(eventSigValidator.verifyEvent(new Event("1234",
+        Assertions.assertFalse(eventSigValidator.validateSignature(new Event("1234",
                 "a23cceb5d5596f80c3249f15ebcf3e42c6aba0b3c88aaf572c018bb6c7e6180c",
                 1705579214,
                 1,

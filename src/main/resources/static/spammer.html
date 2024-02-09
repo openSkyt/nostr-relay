@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>chat</title>
+    <script src="https://bitcoincore.tech/apps/bitcoinjs-ui/lib/bitcoinjs-lib.js"></script>
+    <script src="https://bundle.run/noble-secp256k1@1.2.14"></script>
+    <script src="/nostr-lib.js"></script>
+    <script src="/socket-client.js"></script>
+    <script src="/nostr-client.js"></script>
+    <style>
+        body {
+            background-color: rgb(240, 234, 225);
+            font-family: monospace;
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.5;
+            word-break: break-all;
+        }
+
+        span.ok {
+            color: limegreen;
+        }
+
+        span.bad {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="counter"></div>
+    <main></main>
+
+    <script>
+        let counter = 0; //number of events received and in memory
+        const events = new Map();
+
+        const source = nostrClient('wss://relay.nostr.band/');
+        const victim = nostrClient('ws://localhost:8080');
+
+        const section = document.querySelector('main');
+
+        source.onOpen((event) => {
+            console.log(event);
+            source.send(JSON.stringify(["REQ", "a", { "kinds": [1], "limit": 7777}]))
+        });
+
+        source.onEvent(handleEvent);
+
+        victim.onMessage((message) => {
+            message = JSON.parse(message.data)
+
+            if (message[0] === "OK") {
+                const [_, id, success] = message;
+
+                if (events.has(id)) {
+                    const span = events.get(id);
+                    span.classList.add(success ? 'ok' : 'bad');
+                }
+            }
+        });
+
+        function counterUpdate() {
+            counter++;
+            document.querySelector('#counter').innerText = counter;
+        }
+
+        function handleEvent(event) {
+            counterUpdate();
+
+            victim.publish(event);
+
+            renderEvent(event);
+        }
+
+        function renderEvent(event) {
+            const id = event.id;
+
+            const span = document.createElement('span');
+            span.innerText = Math.random() > 0.5 ? '0' : '1'
+
+            events.set(id, span);
+
+            section.append(span);
+        }
+    </script>
+
+</body>
+
+</html>
