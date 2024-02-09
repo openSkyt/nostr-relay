@@ -1,5 +1,6 @@
 package org.openskyt.nostrrelay.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +22,7 @@ public class Event {
     private String[][] tags;
     private String content;
     private String sig;
+    @JsonIgnore
     @Indexed(expireAfterSeconds = 0)
     private Date expirationTime;
 
@@ -28,7 +30,7 @@ public class Event {
         this.expirationTime = getExpirationValue(tags);
     }
 
-    public Event(String id, String pubkey, long created_at, int kind, String[][] tags, String content, String sig) {//todo remove this constructor is used only for testing
+    public Event(String id, String pubkey, long created_at, int kind, String[][] tags, String content, String sig) {//TODO remove this constructor is used only for testing
 
         this.id = id;
         this.pubkey = pubkey;
