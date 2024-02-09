@@ -96,12 +96,6 @@ public class EventService {
         });
         return events;
     }
-
-    private void removeDocument(String documentId) {
-        Query removeQuery = Query.query(Criteria.where("_id").is(documentId));
-        mongoTemplate.remove(removeQuery, "event");
-    }
-
     public boolean exists(String id) {
         return repo.existsById(id);
     }
