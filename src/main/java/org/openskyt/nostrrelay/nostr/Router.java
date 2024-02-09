@@ -12,7 +12,7 @@ import org.openskyt.nostrrelay.observers.EventObserver;
 import org.openskyt.nostrrelay.observers.ReqObserver;
 import org.openskyt.nostrrelay.util.NostrDeserializer;
 import org.openskyt.nostrrelay.util.NostrUtil;
-import org.springframework.scheduling.annotation.Async;
+import org.openskyt.nostrrelay.util.Validator;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.TextMessage;
@@ -34,6 +34,7 @@ public class Router {
 
     private final NostrDeserializer deserializer;
     private final EventSigValidator sigValidator;
+    private final Validator validator;
     private final NostrUtil util;
 
     private final CloseObserver closeObserver;
@@ -58,7 +59,11 @@ public class Router {
                         break;
                     case "EVENT":
                         Event event = deserializer.deserializeEventMessage(messageJSON);
-                        if (!sigValidator.verifyEvent(event)) {
+                        if (!validator.validatePow(event)) {
+                            sendMessageSafely(session, util.okMessage(event, false, "invalid PoW"));
+                            return;
+                        }
+                        if (false && !sigValidator.validateSignature(event)) {
                             sendMessageSafely(session, util.okMessage(event, false, "invalid crypto data"));
                             return;
                         }

@@ -24,6 +24,8 @@ public class Event {
 
     @JsonIgnore
     private Long expiration;
+    @JsonIgnore
+    private Integer committedPowLevel;
 
     public Event(String id, String pubkey, long created_at, int kind, String[][] tags, String content, String sig) {
         this.id = id;
@@ -34,15 +36,17 @@ public class Event {
         this.content = content;
         this.sig = sig;
 
-        this.expiration = getExpirationValue();
+        setExaminedValues();
     }
 
-    private Long getExpirationValue() {
-        for (String[] tag : tags) {
+    public void setExaminedValues() {
+        for (String[] tag : this.tags) {
             if (tag.length > 1 && "expiration".equals(tag[0])) {
-                return Long.parseLong(tag[1]);
+                this.expiration = Long.parseLong(tag[1]);
+            }
+            if (tag.length == 3 && "nonce".equals(tag[0])) {
+                this.committedPowLevel = Integer.parseInt(tag[2]);
             }
         }
-        return null;
     }
 }

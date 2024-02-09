@@ -14,7 +14,7 @@ import java.util.Collections;
 @Component
 public class EventSigValidator {
 
-    public boolean verifyEvent(Event event) {
+    public boolean validateSignature(Event event) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             ObjectMapper objectMapper = new ObjectMapper();

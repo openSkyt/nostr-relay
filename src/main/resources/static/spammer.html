@@ -44,7 +44,7 @@
 
         source.onOpen((event) => {
             console.log(event);
-            source.send(JSON.stringify(["REQ", "a", { "kinds": [1], "limit": 300}]))
+            source.send(JSON.stringify(["REQ", "a", { "kinds": [1], "limit": 7777}]))
         });
 
         source.onEvent(handleEvent);
