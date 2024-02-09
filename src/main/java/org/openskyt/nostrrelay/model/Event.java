@@ -5,14 +5,16 @@ import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import java.util.Date;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Document
 public class Event {
-
+    
     @Id
     private String id;
     private String pubkey;
@@ -21,12 +23,14 @@ public class Event {
     private String[][] tags;
     private String content;
     private String sig;
-
+    
     @JsonIgnore
-    private Long expiration;
+    @Indexed(expireAfterSeconds = 0)
+    private Date expirationTime;
     @JsonIgnore
     private Integer committedPowLevel;
 
+    // TODO - only for testing - delete 
     public Event(String id, String pubkey, long created_at, int kind, String[][] tags, String content, String sig) {
         this.id = id;
         this.pubkey = pubkey;
@@ -41,7 +45,7 @@ public class Event {
 
     public void setExaminedValues() {
         for (String[] tag : this.tags) {
-            if (tag.length > 1 && "expiration".equals(tag[0])) {
+            if (tag.length == 2 && "expiration".equals(tag[0])) {
                 this.expiration = Long.parseLong(tag[1]);
             }
             if (tag.length == 3 && "nonce".equals(tag[0])) {
