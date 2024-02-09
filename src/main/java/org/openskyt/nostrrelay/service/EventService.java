@@ -22,7 +22,6 @@ public class EventService {
     private final MongoTemplate mongoTemplate;
 
     public void save(Event event) {
-        event.setExpirationTimeIfExists();
         repo.save(event);
     }
 

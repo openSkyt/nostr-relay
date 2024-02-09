@@ -59,11 +59,11 @@ public class Router {
                         break;
                     case "EVENT":
                         Event event = deserializer.deserializeEventMessage(messageJSON);
-                        if (!validator.validatePow(event)) {
+                        if (false && !validator.validatePow(event)) {
                             sendMessageSafely(session, util.okMessage(event, false, "invalid PoW"));
                             return;
                         }
-                        if (false && !sigValidator.validateSignature(event)) {
+                        if (!sigValidator.validateSignature(event)) {
                             sendMessageSafely(session, util.okMessage(event, false, "invalid crypto data"));
                             return;
                         }

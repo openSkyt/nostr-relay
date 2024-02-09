@@ -30,7 +30,7 @@ public class Event {
     @JsonIgnore
     private Integer committedPowLevel;
 
-    // TODO - only for testing - delete 
+    // TODO - only for testing - delete afterwards
     public Event(String id, String pubkey, long created_at, int kind, String[][] tags, String content, String sig) {
         this.id = id;
         this.pubkey = pubkey;
@@ -40,13 +40,13 @@ public class Event {
         this.content = content;
         this.sig = sig;
 
-        setExaminedValues();
+        this.setExaminedValues();
     }
 
     public void setExaminedValues() {
         for (String[] tag : this.tags) {
             if (tag.length == 2 && "expiration".equals(tag[0])) {
-                this.expiration = Long.parseLong(tag[1]);
+                this.expirationTime = new Date(Long.parseLong(tag[1]) * 1000);
             }
             if (tag.length == 3 && "nonce".equals(tag[0])) {
                 this.committedPowLevel = Integer.parseInt(tag[2]);
