@@ -8,11 +8,8 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,6 +22,7 @@ public class EventService {
     private final MongoTemplate mongoTemplate;
 
     public void save(Event event) {
+        event.setExpirationTimeIfExists();
         repo.save(event);
     }
 
@@ -97,18 +95,6 @@ public class EventService {
             }
         });
         return events;
-    }
-
-    @Scheduled(fixedRate = 60_000) // every minute
-    private void removeDocumentsWithExpiredTimestamp() {
-        Query query = Query.query(Criteria.where("expiration").exists(true));
-        List<Event> expiringEvents = mongoTemplate.find(query, Event.class);
-        System.out.println("expiring events count: " + expiringEvents.size());
-        for (Event event : expiringEvents) {
-            if (event.getExpiration() != null && event.getExpiration() <= (System.currentTimeMillis() / 1000L)) {
-                removeDocument(event.getId());
-            }
-        }
     }
 
     private void removeDocument(String documentId) {
