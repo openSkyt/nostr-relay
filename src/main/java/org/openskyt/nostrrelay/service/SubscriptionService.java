@@ -1,6 +1,7 @@
 package org.openskyt.nostrrelay.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.dto.Subscription;
 import org.openskyt.nostrrelay.model.Event;
@@ -12,6 +13,7 @@ import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SubscriptionService {
 
     private final SubscriptionManager subscriptionManager;
@@ -27,6 +29,7 @@ public class SubscriptionService {
         try {
             subscription.session().sendMessage(util.eoseMessage(subscription));
         } catch (IOException e) {
+            log.warn("Failed to send REQuested EVENT-data", e);
             throw new RuntimeException(e);
         }
     }

@@ -2,6 +2,7 @@ package org.openskyt.nostrrelay.nostr;
 
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openskyt.nostrrelay.observers.SessionObserver;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -16,6 +17,7 @@ import java.util.*;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class NostrWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
@@ -27,7 +29,7 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
 
         sessions.add(session);
-        System.out.println("dev: New session opened. Current session size: " + sessions.size());
+        log.info("DEV: New session opened. Current session size: " + sessions.size());
     }
 
     @Override
@@ -36,7 +38,8 @@ public class NostrWebSocketHandler extends TextWebSocketHandler {
 
         observer.notifyConsumers(session);
         sessions.remove(session);
-        System.out.println("dev: WebSocket session closed with reason: " + status.getReason());
+        log.info("DEV: WebSocket session closed with reason: " + status.getReason());
+        log.info("DEV: Current session size: " + sessions.size());
     }
 
     @Override

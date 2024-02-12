@@ -3,9 +3,10 @@ package org.openskyt.nostrrelay.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
-import org.openskyt.nostrrelay.dto.*;
+import lombok.extern.slf4j.Slf4j;
+import org.openskyt.nostrrelay.dto.CloseData;
+import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.model.Event;
-import org.openskyt.nostrrelay.util.NostrUtil;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketSession;
 
@@ -17,6 +18,7 @@ import java.util.Set;
  */
 @Getter
 @Component
+@Slf4j
 public class NostrDeserializer {
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -37,6 +39,7 @@ public class NostrDeserializer {
                 return deserializeEvent(mapper.writeValueAsString(messageData[1]));
             }
         } catch (JsonProcessingException e) {
+            log.warn("Failed to deserialize incoming EVENT-message" + messageJSON, e);
             throw new RuntimeException(e);
         }
         return null;
@@ -64,6 +67,7 @@ public class NostrDeserializer {
                 return reqFilterSet;
             }
         } catch (JsonProcessingException e) {
+            log.warn("Failed to deserialize incoming REQ-message" + messageJSON, e);
             throw new RuntimeException(e);
         }
         return null;
@@ -83,6 +87,7 @@ public class NostrDeserializer {
             Object[] message = mapper.readValue(messageJSON, Object[].class);
             return  new CloseData(session, message[1].toString());
         } catch (JsonProcessingException e) {
+            log.warn("Failed to deserialize incoming CLOSE-message" + messageJSON, e);
             throw new RuntimeException(e);
         }
     }
@@ -100,6 +105,7 @@ public class NostrDeserializer {
             event = mapper.readValue(eventJSON, Event.class);
             event.setExaminedValues();
         } catch (JsonProcessingException e) {
+            log.warn("Failed to deserialize incoming EVENT-message" + eventJSON, e);
             throw new RuntimeException(e);
         }
         return event;
@@ -116,6 +122,7 @@ public class NostrDeserializer {
         try {
             return mapper.readValue(reqJSON, ReqFilter.class);
         } catch (JsonProcessingException e) {
+            log.warn("Failed to deserialize incoming REQ-message" + reqJSON, e);
             throw new RuntimeException(e);
         }
     }

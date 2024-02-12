@@ -1,6 +1,7 @@
 package org.openskyt.nostrrelay.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.openskyt.nostrrelay.dto.ReqFilter;
 import org.openskyt.nostrrelay.model.Event;
 import org.openskyt.nostrrelay.repository.EventRepository;
@@ -16,6 +17,7 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 @EnableScheduling
+@Slf4j
 public class EventService {
 
     private final EventRepository repo;
@@ -28,7 +30,10 @@ public class EventService {
     public void delete(Event event) {
         try {
             repo.deleteById(event.getId());
+            log.info("Deleted event with id: " + event.getId());
+
         } catch (Exception e) {
+            log.warn("Failed to delete event with id: " + event.getId());
             throw new RuntimeException();
         }
     }
