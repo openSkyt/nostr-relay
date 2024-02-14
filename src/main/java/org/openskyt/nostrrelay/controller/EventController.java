@@ -54,7 +54,7 @@ public class EventController implements NostrConsumer {
         Optional<Event> optEventData = eventService.getMetaData(event.getPubkey());
         // remove redundant data
         optEventData.ifPresent(eventService::delete);
-        eventService.save(event);
+        handleEvent(event);
     }
 
     /**
