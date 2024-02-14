@@ -10,7 +10,6 @@ public class Validator {
     private static final short POW_LEVEL = 20;
 
     public boolean validatePow(Event event) {
-        System.out.println(event.getCommittedPowLevel() != null && event.getCommittedPowLevel() >= POW_LEVEL && validateHash(event));
         return event.getCommittedPowLevel() != null && event.getCommittedPowLevel() >= POW_LEVEL && validateHash(event);
     }
 

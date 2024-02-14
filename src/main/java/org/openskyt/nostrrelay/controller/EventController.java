@@ -29,13 +29,24 @@ public class EventController implements NostrConsumer {
     private void handle(Event event) {
         switch (event.getKind()) {
             case 0      : handleEvent_0(event); break;
-            case 1      : handleEvent_1(event); break;
-            default     : System.out.println("ignoring event: " + event);
+            case 3      : handleEvent_3(event); break;
+            default     : handleEvent(event);
         }
     }
 
     /**
-     * Handles EVENT-kind 0 by checking redundancy, saves to DB. Responds with OK-message
+     * Handles EVENT by saving into the DB.
+     * @param event
+     * incoming EVENT-data
+     */
+    private void handleEvent(Event event) {
+        if (!eventService.exists(event.getId())) {
+            eventService.save(event);
+        }
+    }
+
+    /**
+     * Handles EVENT-kind 0 by checking redundancy, saves into DB.
      * @param event
      * incoming EVENT-data
      */
@@ -47,12 +58,15 @@ public class EventController implements NostrConsumer {
     }
 
     /**
-     * Handles EVENT-kind 1 by saving into the DB. Responds with OK-message.
+     * Handles EVENT-kind 3 by checking redundancy (by pubkey), merges data or saves incoming EVENT into db.
      * @param event
      * incoming EVENT-data
      */
-    private void handleEvent_1(Event event) {
-        if (!eventService.exists(event.getId())) {
+    private void handleEvent_3(Event event) {
+        Optional<Event> optFollowList = eventService.getFollowList(event.getPubkey());
+        if (optFollowList.isPresent()) {
+            eventService.mergeFollowList(optFollowList.get(), event);
+        } else {
             eventService.save(event);
         }
     }

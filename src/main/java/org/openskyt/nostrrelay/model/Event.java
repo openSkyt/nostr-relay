@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Arrays;
 import java.util.Date;
 
 @Getter
@@ -52,5 +54,12 @@ public class Event {
                 this.committedPowLevel = Integer.parseInt(tag[2]);
             }
         }
+    }
+
+    public void addTag(String[] tag) {
+        String[][] newTags = new String[this.tags.length + 1][];
+        System.arraycopy(this.tags, 0, newTags, 0, this.tags.length);
+        newTags[this.tags.length] = tag;
+        this.tags = newTags;
     }
 }

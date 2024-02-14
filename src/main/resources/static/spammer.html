@@ -37,14 +37,14 @@
         let counter = 0; //number of events received and in memory
         const events = new Map();
 
-        const source = nostrClient('wss://relay.nostr.band/');
-        const victim = nostrClient('ws://localhost:8080');
+        const source = nostrClient('wss://hipstr.cz/');
+        const victim = nostrClient('ws://localhost:8080/');
 
         const section = document.querySelector('main');
 
         source.onOpen((event) => {
             console.log(event);
-            source.send(JSON.stringify(["REQ", "a", { "kinds": [1], "limit": 7777}]))
+            source.send(JSON.stringify(["REQ", "a", { "kinds": [1], "limit": 50000}]))
         });
 
         source.onEvent(handleEvent);

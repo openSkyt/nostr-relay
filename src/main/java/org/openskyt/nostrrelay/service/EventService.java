@@ -10,6 +10,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -102,5 +104,32 @@ public class EventService {
     }
     public boolean exists(String id) {
         return repo.existsById(id);
+    }
+
+    public void mergeFollowList(Event persistedEvent, Event incomingEvent) {
+        Event event = new Event(
+            incomingEvent.getId(),
+            incomingEvent.getPubkey(),
+            incomingEvent.getCreated_at(),
+            incomingEvent.getKind(),
+            persistedEvent.getTags(), // save persisted event's tags so that i do really APPEND to the end
+            incomingEvent.getContent(),
+            incomingEvent.getSig()
+        );
+        // search for unique tags in incoming event and APPENDING them
+        Arrays.stream(persistedEvent.getTags()).forEach(pt -> {
+            Arrays.stream(incomingEvent.getTags()).forEach(t -> {
+                if (!Arrays.equals(pt, t)) {
+                    event.addTag(t);
+                }
+            });
+        });
+        // update existing follow list with newly created one
+        repo.delete(persistedEvent);
+        repo.save(event);
+    }
+
+    public Optional<Event> getFollowList(String pubkey) {
+        return repo.findByPubkeyAndByKind(pubkey, 3).stream().findAny();
     }
 }
