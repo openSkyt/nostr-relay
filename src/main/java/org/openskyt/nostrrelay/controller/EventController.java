@@ -29,8 +29,7 @@ public class EventController implements NostrConsumer {
     private void handle(Event event) {
         switch (event.getKind()) {
             case 0      : handleEvent_0(event); break;
-            case 1      : handleEvent_1(event); break;
-            default     : System.out.println("ignoring event: " + event);
+            default     : handleEvent(event); break;
         }
     }
 
@@ -43,7 +42,7 @@ public class EventController implements NostrConsumer {
         Optional<Event> optEventData = eventService.getMetaData(event.getPubkey());
         // remove redundant data
         optEventData.ifPresent(eventService::delete);
-        eventService.save(event);
+        handleEvent(event);
     }
 
     /**
@@ -51,7 +50,7 @@ public class EventController implements NostrConsumer {
      * @param event
      * incoming EVENT-data
      */
-    private void handleEvent_1(Event event) {
+    private void handleEvent(Event event) {
         if (!eventService.exists(event.getId())) {
             eventService.save(event);
         }
