@@ -132,4 +132,17 @@ public class EventService {
     public Optional<Event> getFollowList(String pubkey) {
         return repo.findByPubkeyAndByKind(pubkey, 3).stream().findAny();
     }
+
+    public void deleteEvents(Event event) {
+        String[][] tags = event.getTags();
+        Criteria criteria = new Criteria();
+        Arrays.stream(tags).forEach(t -> {
+            if (t[0].equals("e")) {
+                criteria.and("id").is(t[1]);
+                criteria.and("pubkey").is(event.getPubkey());
+            }
+        });
+        Query query = new Query(criteria);
+        mongoTemplate.remove(query, Event.class);
+    }
 }

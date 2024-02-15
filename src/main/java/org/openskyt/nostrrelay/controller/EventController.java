@@ -30,6 +30,7 @@ public class EventController implements NostrConsumer {
         switch (event.getKind()) {
             case 0      : handleEvent_0(event); break;
             case 3      : handleEvent_3(event); break;
+            case 5      : handleEvent_5(event); break;
             default     : handleEvent(event);
         }
     }
@@ -69,6 +70,10 @@ public class EventController implements NostrConsumer {
         } else {
             eventService.save(event);
         }
+    }
+
+    private void handleEvent_5(Event event) {
+        eventService.deleteEvents(event);
     }
 
     // overridden method from implemented NostrConsumer interface - invokes actual impl. defined in this class
