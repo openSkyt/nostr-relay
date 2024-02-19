@@ -66,7 +66,7 @@ public class EventController implements NostrConsumer {
     private void handleEvent_3(Event event) {
         Optional<Event> optFollowList = eventService.getFollowList(event.getPubkey());
         if (optFollowList.isPresent()) {
-            eventService.mergeFollowList(optFollowList.get(), event);
+            eventService.delete(optFollowList.get());
         } else {
             eventService.save(event);
         }

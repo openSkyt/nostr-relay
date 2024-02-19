@@ -106,29 +106,6 @@ public class EventService {
         return repo.existsById(id);
     }
 
-    public void mergeFollowList(Event persistedEvent, Event incomingEvent) {
-        Event event = new Event(
-            incomingEvent.getId(),
-            incomingEvent.getPubkey(),
-            incomingEvent.getCreated_at(),
-            incomingEvent.getKind(),
-            persistedEvent.getTags(), // save persisted event's tags so that i do really APPEND to the end
-            incomingEvent.getContent(),
-            incomingEvent.getSig()
-        );
-        // search for unique tags in incoming event and APPENDING them
-        Arrays.stream(persistedEvent.getTags()).forEach(pt -> {
-            Arrays.stream(incomingEvent.getTags()).forEach(t -> {
-                if (!Arrays.equals(pt, t)) {
-                    event.addTag(t);
-                }
-            });
-        });
-        // update existing follow list with newly created one
-        repo.delete(persistedEvent);
-        repo.save(event);
-    }
-
     public Optional<Event> getFollowList(String pubkey) {
         return repo.findByPubkeyAndByKind(pubkey, 3).stream().findAny();
     }
@@ -140,9 +117,11 @@ public class EventService {
             if (t[0].equals("e")) {
                 criteria.and("id").is(t[1]);
                 criteria.and("pubkey").is(event.getPubkey());
+            } else if (t[0].equals("a")) {
+
             }
+            Query query = new Query(criteria);
+            mongoTemplate.remove(query, Event.class);
         });
-        Query query = new Query(criteria);
-        mongoTemplate.remove(query, Event.class);
     }
 }
